@@ -18,7 +18,11 @@ Live: https://youngju-eca20c.github.io/MUSIC/
 
 ## Adding/editing lyrics for a song without embedded USLT
 
-Create `assets/lyrics/NN.txt` (matching the track number). Sidecar files take priority over ID3.
+Create `assets/lyrics/NN.manual.txt` (matching the track number).
+Manual files always take priority over ID3 and the build never overwrites them.
+
+`assets/lyrics/NN.txt` (without `.manual`) is auto-generated from ID3 and is
+overwritten on every build — don't edit it directly.
 
 ## Keyboard shortcuts
 

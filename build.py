@@ -5,10 +5,14 @@ Run this whenever you add/remove songs or change metadata.
     python build.py
 
 Output:
-    data.json              - track metadata (titles, durations, lyrics flags, etc.)
-    assets/art/NN.jpg      - extracted album art per track
-    assets/lyrics/NN.txt   - extracted lyrics per track (only if embedded)
-                             You can also drop your own NN.txt here; it overrides ID3.
+    data.json                     - track metadata (titles, durations, lyrics flags)
+    assets/art/NN.jpg             - extracted album art per track (auto, build owns it)
+    assets/lyrics/NN.txt          - extracted lyrics per track (auto, build owns it)
+    assets/lyrics/NN.manual.txt   - YOUR manual lyrics overrides (build never touches
+                                    these; takes priority over auto NN.txt).
+
+Orphan auto files (for track numbers no longer present) are cleaned up automatically
+so reordering tracks doesn't leave stale lyrics attached to the wrong song.
 """
 
 from __future__ import annotations
@@ -66,16 +70,39 @@ def extract_lyrics(audio: MP3) -> str | None:
     return None
 
 
+def cleanup_orphans(current_nums: set[str]) -> None:
+    """Delete art/lyrics files whose track number no longer exists in the folder."""
+    for f in ART_DIR.glob("*"):
+        if f.is_file() and f.stem not in current_nums:
+            print(f"  cleanup: removed orphan {f.relative_to(ROOT)}")
+            f.unlink()
+    for f in LYR_DIR.glob("*.txt"):
+        stem = f.stem
+        if stem.endswith(".manual"):
+            stem = stem[: -len(".manual")]
+        if stem not in current_nums:
+            print(f"  cleanup: removed orphan {f.relative_to(ROOT)}")
+            f.unlink()
+
+
 def main() -> None:
     ART_DIR.mkdir(parents=True, exist_ok=True)
     LYR_DIR.mkdir(parents=True, exist_ok=True)
 
-    tracks: list[dict] = []
     mp3_files = sorted(ROOT.glob("*.mp3"))
     if not mp3_files:
         print("No MP3 files found in", ROOT)
         return
 
+    # Pre-pass: figure out which track numbers exist now, drop orphan assets.
+    current_nums: set[str] = set()
+    for mp3 in mp3_files:
+        m = TRACK_RE.match(mp3.name)
+        if m:
+            current_nums.add(slug(m.group(1)))
+    cleanup_orphans(current_nums)
+
+    tracks: list[dict] = []
     for mp3 in mp3_files:
         m = TRACK_RE.match(mp3.name)
         if not m:
@@ -91,21 +118,33 @@ def main() -> None:
         artist = str(tags.get("TPE1", "")).strip() if tags else ""
         duration = float(audio.info.length)
 
+        # Album art: always re-extract (build owns NN.jpg). Overwrites previous.
         art_stem = ART_DIR / track_num
+        for old in ART_DIR.glob(f"{track_num}.*"):
+            old.unlink()
         art_name = extract_art(audio, art_stem)
 
-        # Sidecar lyrics file overrides ID3 lyrics.
-        sidecar = LYR_DIR / f"{track_num}.txt"
-        if sidecar.exists():
-            lyrics = sidecar.read_text(encoding="utf-8").strip()
-            lyrics_source = "sidecar"
+        # Lyrics resolution:
+        #   1. NN.manual.txt  → your manual override, build never touches it
+        #   2. NN.txt         → auto-extracted from ID3, build always rewrites it
+        manual = LYR_DIR / f"{track_num}.manual.txt"
+        auto = LYR_DIR / f"{track_num}.txt"
+        lyrics_rel: str | None = None
+        lyrics_source: str | None = None
+
+        if manual.exists() and manual.read_text(encoding="utf-8").strip():
+            lyrics_rel = f"assets/lyrics/{track_num}.manual.txt"
+            lyrics_source = "manual"
+            auto.unlink(missing_ok=True)
         else:
-            lyrics = extract_lyrics(audio)
-            if lyrics:
-                sidecar.write_text(lyrics, encoding="utf-8")
+            id3_lyrics = extract_lyrics(audio)
+            if id3_lyrics:
+                auto.write_text(id3_lyrics, encoding="utf-8")
+                lyrics_rel = f"assets/lyrics/{track_num}.txt"
                 lyrics_source = "id3"
             else:
-                lyrics_source = None
+                # No lyrics for this track now — drop a stale auto file if present.
+                auto.unlink(missing_ok=True)
 
         tracks.append({
             "num": track_num,
@@ -114,14 +153,14 @@ def main() -> None:
             "file": mp3.name,
             "duration": round(duration, 2),
             "art": f"assets/art/{art_name}" if art_name else None,
-            "lyrics": f"assets/lyrics/{track_num}.txt" if lyrics else None,
+            "lyrics": lyrics_rel,
             "lyricsSource": lyrics_source,
         })
 
         marks = []
         if art_name:
             marks.append("art")
-        if lyrics:
+        if lyrics_rel:
             marks.append(f"lyr({lyrics_source})")
         print(f"  {track_num:6} {title[:40]:40} [{', '.join(marks) or '-'}]")
 
