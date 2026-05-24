@@ -90,34 +90,6 @@ button {
   z-index: 10;
 }
 
-/* Bottom-left floating tracklist button (thumb-friendly) */
-.fab-tracklist {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.10);
-  color: var(--fg);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-  transition: background 0.2s var(--transition), transform 0.15s var(--transition);
-  z-index: 15;
-}
-.fab-tracklist:hover { background: rgba(255, 255, 255, 0.18); }
-.fab-tracklist:active { transform: scale(0.92); }
-/* Respect safe area on iOS notch/home-indicator phones */
-@supports (padding: max(0px)) {
-  .fab-tracklist {
-    left: max(16px, env(safe-area-inset-left));
-    bottom: max(16px, env(safe-area-inset-bottom));
-  }
-}
-
 .brand {
   font-size: 13px;
   letter-spacing: 0.22em;
@@ -348,7 +320,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
+}
+/* Narrow phones: tighten 6-button row so it fits without horizontal scroll */
+@media (max-width: 420px) {
+  .controls { gap: 8px; }
+  .ctrl-btn.small { width: 38px; height: 38px; }
+  .ctrl-btn { width: 44px; height: 44px; }
+  .ctrl-btn.play { width: 58px; height: 58px; }
 }
 
 .ctrl-btn {
