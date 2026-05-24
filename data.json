@@ -180,6 +180,46 @@
       "art": "assets/art/16.jpg",
       "lyrics": "assets/lyrics/16.txt",
       "lyricsSource": "sidecar"
+    },
+    {
+      "num": "91",
+      "title": "해피 루피",
+      "artist": "HAEMAMUL",
+      "file": "91. 해피 루피.mp3",
+      "duration": 124.99,
+      "art": "assets/art/91.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "92",
+      "title": "SLEEPY",
+      "artist": "HAEMAMUL",
+      "file": "92. SLEEPY.mp3",
+      "duration": 187.63,
+      "art": "assets/art/92.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "93",
+      "title": "해피 루피, 도도 슬리피",
+      "artist": "HAEMAMUL",
+      "file": "93. 해피 루피, 도도 슬리피.mp3",
+      "duration": 191.62,
+      "art": "assets/art/93.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "94",
+      "title": "벚꽃달콤",
+      "artist": "HAEMAMUL",
+      "file": "94. 벚꽃달콤.mp3",
+      "duration": 199.82,
+      "art": "assets/art/94.jpg",
+      "lyrics": "assets/lyrics/94.txt",
+      "lyricsSource": "id3"
     }
   ]
 }
