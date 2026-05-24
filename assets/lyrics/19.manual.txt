@@ -1,10 +1,3 @@
-[Dark Festival Intro]
-[No Vocals]
-[Muted Guitar Riff]
-[Festival Drums Build]
-[Minor Key]
-
-[Verse 1]
 밤은 붉은 비단처럼
 찢어진 채 펄럭이고
 식어버린 별의 재가
@@ -15,7 +8,6 @@
 끝이 오는 거리에서
 우린 박자를 잃었어
 
-[Pre-Chorus]
 기도는 너무 늦었고
 도망은 너무 멀어서
 남은 건 젖은 손과
@@ -26,7 +18,6 @@ Let it bloom
 망가지는 것들만
 이상하게 아름다워
 
-[Chorus]
 끝난다면 춤을 춰
 울 시간도 아까워
 무너지는 하늘마저
@@ -38,12 +29,9 @@ Let it bloom
 흩뿌려져, 흩뿌려져
 
 Dance in the end
-Smile like we’re blessed
+Smile like we're blessed
 사라지는 우리에게
 가장 화려한 밤을 줘
-
-[Bridge]
-[Half-Time Build]
 
 하늘이 갈라지는 소리
 이상하게 음악 같아서
@@ -54,12 +42,6 @@ Smile like we’re blessed
 처량하게 빛나보자
 축복받지 못한 마음도
 오늘만은 왕관을 쓰자
-
-[Final Chorus]
-[Explosive Chorus]
-[Wide Guitars]
-[Festival Drums]
-[Emotional High Vocal]
 
 끝난다면 춤을 춰
 울 시간도 아까워
@@ -75,9 +57,6 @@ Dance in the end
 Burn like a prayer
 새벽이 오지 않아도
 우린 축제였다고
-
-[Outro]
-[Noise Guitar Fade]
 
 모든 빛이 꺼진 뒤에
 재만 조용히 내려도

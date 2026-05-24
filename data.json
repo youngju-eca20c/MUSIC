@@ -188,8 +188,8 @@
       "file": "17. AI는 연애 상담을 하지 않아.mp3",
       "duration": 226.8,
       "art": "assets/art/17.jpg",
-      "lyrics": "assets/lyrics/17.txt",
-      "lyricsSource": "id3"
+      "lyrics": "assets/lyrics/17.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "18",
@@ -198,8 +198,8 @@
       "file": "18. 내일의 나는.mp3",
       "duration": 253.03,
       "art": "assets/art/18.jpg",
-      "lyrics": "assets/lyrics/18.txt",
-      "lyricsSource": "id3"
+      "lyrics": "assets/lyrics/18.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "19",
@@ -208,8 +208,8 @@
       "file": "19. 세계멸망 전야제.mp3",
       "duration": 247.58,
       "art": "assets/art/19.jpg",
-      "lyrics": "assets/lyrics/19.txt",
-      "lyricsSource": "id3"
+      "lyrics": "assets/lyrics/19.manual.txt",
+      "lyricsSource": "manual"
     }
   ]
 }
