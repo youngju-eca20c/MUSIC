@@ -38,8 +38,8 @@
       "file": "04. 공백의 궤적.mp3",
       "duration": 206.35,
       "art": "assets/art/04.jpg",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/04.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "04.1",
@@ -48,8 +48,8 @@
       "file": "04.1 공백의 궤적 Accoustic Ver.mp3",
       "duration": 244.22,
       "art": "assets/art/04.1.jpg",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/04.1.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "05",
