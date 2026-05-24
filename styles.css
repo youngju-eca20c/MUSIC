@@ -95,7 +95,17 @@ button {
   letter-spacing: 0.22em;
   font-weight: 600;
   color: var(--fg-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.brand-heart {
+  display: inline-flex;
+  align-items: center;
+  color: #ff4d6d;
+  transition: opacity 0.3s var(--transition);
+}
+.brand-heart[hidden] { display: none; }
 
 .icon-btn {
   width: 40px;
@@ -320,14 +330,43 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
 }
-/* Narrow phones: tighten 6-button row so it fits without horizontal scroll */
 @media (max-width: 420px) {
-  .controls { gap: 8px; }
-  .ctrl-btn.small { width: 38px; height: 38px; }
-  .ctrl-btn { width: 44px; height: 44px; }
-  .ctrl-btn.play { width: 58px; height: 58px; }
+  .controls { gap: 10px; }
+}
+
+/* Secondary controls (tracklist, like, heart-list) — above progress bar */
+.secondary-controls {
+  width: min(88vw, 420px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-top: -4px;
+}
+
+.sec-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--fg-dim);
+  transition: background 0.15s var(--transition), color 0.15s var(--transition), transform 0.1s var(--transition);
+}
+.sec-btn:hover { background: var(--surface); color: var(--fg); }
+.sec-btn:active { transform: scale(0.92); }
+
+/* Heart button filled when current track is liked */
+#btn-like.liked,
+#btn-like.liked:hover { color: #ff4d6d; }
+#btn-like.liked svg { fill: #ff4d6d; }
+
+/* Tighten secondary row spacing on narrow screens to match controls */
+@media (max-width: 420px) {
+  .secondary-controls { padding: 0 4px; }
+  .sec-btn { width: 38px; height: 38px; }
 }
 
 .ctrl-btn {
@@ -464,7 +503,39 @@ button {
   width: 5px; height: 5px;
   background: var(--fg-dim);
   border-radius: 50%;
-  margin-left: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.ti-liked {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 6px;
+  color: #ff4d6d;
+}
+
+/* Empty state for the heart drawer when nothing is liked yet */
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--fg-dim);
+  font-size: 13px;
+  line-height: 1.8;
+  list-style: none;
+}
+.empty-state-heart {
+  display: inline-flex;
+  color: #ff4d6d;
+  margin: 0 3px;
+  vertical-align: middle;
+}
+
+/* Heart icon next to drawer title when in liked mode */
+.tracklist-title-heart {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  color: #ff4d6d;
   vertical-align: middle;
 }
 

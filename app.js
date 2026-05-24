@@ -31,9 +31,13 @@ const btnShuffle = $('btn-shuffle');
 const btnRepeat = $('btn-repeat');
 
 const btnTracklist = $('btn-tracklist');
+const btnLike = $('btn-like');
+const btnHeartList = $('btn-heart-list');
 const btnCloseTracklist = $('btn-close-tracklist');
 const tracklistEl = $('tracklist');
 const tracklistItems = $('tracklist-items');
+const tracklistTitle = document.querySelector('.tracklist-title');
+const brandHeart = $('brand-heart');
 const scrim = $('scrim');
 
 const bgA = $('bg-a');
@@ -49,6 +53,12 @@ let shuffle = false;
 let repeat = 'off';       // 'off' | 'all' | 'one'
 let lyricsCache = new Map();
 let bgFlip = false;       // toggle between bg-a and bg-b
+
+// Likes / heart mode
+const LIKED_STORAGE_KEY = 'haemamul.liked';
+let liked = new Set();    // Set<trackNum>
+let heartMode = false;    // true when current queue is filtered to liked tracks
+let drawerMode = 'all';   // 'all' | 'liked' — which view the drawer currently shows
 
 // ────────────────────────────────────────────────────────────────
 //  Helpers
@@ -203,8 +213,75 @@ async function loadTrack(autoplay = false) {
   }
 
   updatePlayingItem();
+  updateLikeButton();
   updateMediaSession();
   syncURL();
+}
+
+// ────────────────────────────────────────────────────────────────
+//  Likes (persisted) + heart mode
+// ────────────────────────────────────────────────────────────────
+function loadLiked() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(LIKED_STORAGE_KEY) || '[]');
+    liked = new Set(arr);
+  } catch { liked = new Set(); }
+}
+function saveLiked() {
+  try { localStorage.setItem(LIKED_STORAGE_KEY, JSON.stringify([...liked])); }
+  catch { /* quota or disabled — ignore */ }
+}
+
+function toggleLike() {
+  const t = currentTrack();
+  if (!t) return;
+  if (liked.has(t.num)) liked.delete(t.num);
+  else liked.add(t.num);
+  saveLiked();
+  updateLikeButton();
+  // Refresh tracklist if currently rendered (so heart icons update)
+  if (tracklistEl.classList.contains('open')) renderTracklist();
+}
+
+function updateLikeButton() {
+  const t = currentTrack();
+  const isLiked = !!(t && liked.has(t.num));
+  btnLike.classList.toggle('liked', isLiked);
+  btnLike.setAttribute('aria-label', isLiked ? '좋아요 해제' : '좋아요');
+  btnLike.setAttribute('title', isLiked ? '좋아요 해제' : '좋아요');
+}
+
+function updateHeartIndicator() {
+  brandHeart.hidden = !heartMode;
+}
+
+function enterHeartMode(startIdx) {
+  const likedIdxs = tracks.map((t, i) => liked.has(t.num) ? i : -1).filter(i => i >= 0);
+  if (likedIdxs.length === 0) return false;
+  heartMode = true;
+  if (shuffle) {
+    const rest = likedIdxs.filter(i => i !== startIdx);
+    order = [startIdx, ...shuffleArray(rest)];
+  } else {
+    order = likedIdxs;
+  }
+  cursor = Math.max(0, order.indexOf(startIdx));
+  updateHeartIndicator();
+  return true;
+}
+
+function exitHeartMode() {
+  if (!heartMode) return;
+  heartMode = false;
+  const currentIdx = order[cursor];
+  if (shuffle) {
+    const rest = tracks.map((_, i) => i).filter(i => i !== currentIdx);
+    order = [currentIdx, ...shuffleArray(rest)];
+  } else {
+    order = tracks.map((_, i) => i);
+  }
+  cursor = Math.max(0, order.indexOf(currentIdx));
+  updateHeartIndicator();
 }
 
 function play() { audio.play().catch(() => {}); }
@@ -217,7 +294,7 @@ function next() {
     loadTrack(true);
   } else if (repeat === 'all') {
     cursor = 0;
-    if (shuffle) order = shuffleArray(tracks.map((_, i) => i));
+    if (shuffle) order = shuffleArray(baseOrderIdxs());
     loadTrack(true);
   } else {
     cursor = 0;
@@ -239,17 +316,26 @@ function prev() {
   loadTrack(true);
 }
 
+/** Indices of tracks eligible for the current mode (full set, or liked-only). */
+function baseOrderIdxs() {
+  if (heartMode) {
+    return tracks.map((t, i) => liked.has(t.num) ? i : -1).filter(i => i >= 0);
+  }
+  return tracks.map((_, i) => i);
+}
+
 function toggleShuffle() {
   shuffle = !shuffle;
   btnShuffle.dataset.state = shuffle ? 'on' : 'off';
   const currentIdx = order[cursor];
+  const baseIdxs = baseOrderIdxs();
   if (shuffle) {
-    const rest = tracks.map((_, i) => i).filter(i => i !== currentIdx);
+    const rest = baseIdxs.filter(i => i !== currentIdx);
     order = [currentIdx, ...shuffleArray(rest)];
   } else {
-    order = tracks.map((_, i) => i);
+    order = baseIdxs;
   }
-  cursor = order.indexOf(currentIdx);
+  cursor = Math.max(0, order.indexOf(currentIdx));
 }
 
 const REPEAT_LABELS = {
@@ -367,14 +453,17 @@ btnShuffle.addEventListener('click', toggleShuffle);
 btnRepeat.addEventListener('click', cycleRepeat);
 
 // ────────────────────────────────────────────────────────────────
-//  Tracklist drawer
+//  Tracklist drawer (two modes: 'all' and 'liked')
 // ────────────────────────────────────────────────────────────────
-function openTracklist() {
+const HEART_SVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+
+function openTracklist(mode = 'all') {
+  drawerMode = mode;
+  renderTracklist();
   tracklistEl.classList.add('open');
   scrim.hidden = false;
   requestAnimationFrame(() => scrim.classList.add('visible'));
   tracklistEl.setAttribute('aria-hidden', 'false');
-  // Scroll the playing item into view
   const playing = tracklistItems.querySelector('.playing');
   if (playing) playing.scrollIntoView({ block: 'center' });
 }
@@ -385,28 +474,61 @@ function closeTracklist() {
   tracklistEl.setAttribute('aria-hidden', 'true');
 }
 
-btnTracklist.addEventListener('click', openTracklist);
+btnTracklist.addEventListener('click', () => openTracklist('all'));
+btnHeartList.addEventListener('click', () => openTracklist('liked'));
+btnLike.addEventListener('click', toggleLike);
 btnCloseTracklist.addEventListener('click', closeTracklist);
 scrim.addEventListener('click', closeTracklist);
 
 function renderTracklist() {
+  // Title
+  if (drawerMode === 'liked') {
+    tracklistTitle.innerHTML = `<span class="tracklist-title-heart">${HEART_SVG}</span>좋아하는 곡`;
+  } else {
+    tracklistTitle.textContent = 'Tracks';
+  }
+
+  // Items
   tracklistItems.innerHTML = '';
-  tracks.forEach((t, i) => {
+  const visibleIdxs = drawerMode === 'liked'
+    ? tracks.map((t, i) => liked.has(t.num) ? i : -1).filter(i => i >= 0)
+    : tracks.map((_, i) => i);
+
+  if (drawerMode === 'liked' && visibleIdxs.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'empty-state';
+    li.innerHTML = `좋아하는 곡이 아직 없어요.<br>곡을 들으면서 <span class="empty-state-heart">${HEART_SVG}</span> 버튼을 눌러보세요.`;
+    tracklistItems.appendChild(li);
+    return;
+  }
+
+  visibleIdxs.forEach((i) => {
+    const t = tracks[i];
+    const isLiked = liked.has(t.num);
     const li = document.createElement('li');
     li.className = 'tracklist-item';
     li.dataset.idx = String(i);
     li.innerHTML = `
       <div class="ti-num">${t.num}</div>
-      <div class="ti-title">${escapeHtml(t.title)}${t.lyrics ? '<span class="ti-lyr" title="가사 있음"></span>' : ''}</div>
+      <div class="ti-title">${escapeHtml(t.title)}${t.lyrics ? '<span class="ti-lyr" title="가사 있음"></span>' : ''}${isLiked ? `<span class="ti-liked" title="좋아하는 곡">${HEART_SVG}</span>` : ''}</div>
       <div class="ti-dur">${fmtTime(t.duration)}</div>
     `;
-    li.addEventListener('click', () => {
-      cursor = order.indexOf(i);
-      loadTrack(true);
-      closeTracklist();
-    });
+    li.addEventListener('click', () => playFromDrawer(i));
     tracklistItems.appendChild(li);
   });
+  updatePlayingItem();
+}
+
+function playFromDrawer(trackIdx) {
+  if (drawerMode === 'liked') {
+    enterHeartMode(trackIdx);
+  } else {
+    if (heartMode) exitHeartMode();
+    const pos = order.indexOf(trackIdx);
+    cursor = pos >= 0 ? pos : 0;
+  }
+  loadTrack(true);
+  closeTracklist();
 }
 
 function updatePlayingItem() {
@@ -445,8 +567,9 @@ document.addEventListener('keydown', (ev) => {
     case 'r': case 'R': cycleRepeat(); break;
     case 'l': case 'L': toggleLyrics(); break;
     case 't': case 'T':
-      tracklistEl.classList.contains('open') ? closeTracklist() : openTracklist();
+      tracklistEl.classList.contains('open') ? closeTracklist() : openTracklist('all');
       break;
+    case 'f': case 'F': toggleLike(); break;
     case 'Escape':
       if (tracklistEl.classList.contains('open')) closeTracklist();
       else if (artCard.classList.contains('flipped')) artCard.classList.remove('flipped');
@@ -515,6 +638,8 @@ function enableShuffleFromTrack(trackIdx) {
     console.error(err);
     return;
   }
+
+  loadLiked();
 
   const hashCursor = cursorFromHash();
   if (hashCursor !== null) {
