@@ -148,8 +148,8 @@
       "file": "13. Amazon drip.mp3",
       "duration": 237.74,
       "art": "assets/art/13.jpg",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/13.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "14",
@@ -168,8 +168,8 @@
       "file": "15. 나는바다의파리.mp3",
       "duration": 152.04,
       "art": "assets/art/15.jpg",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/15.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "16",
