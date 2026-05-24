@@ -487,12 +487,19 @@ function syncURL() {
   }
 }
 
-function initialCursorFromHash() {
+function cursorFromHash() {
   const m = location.hash.match(/t=([\d.]+)/);
-  if (!m) return 0;
-  const num = m[1];
-  const idx = tracks.findIndex(t => t.num === num);
-  return idx >= 0 ? idx : 0;
+  if (!m) return null;
+  const idx = tracks.findIndex(t => t.num === m[1]);
+  return idx >= 0 ? idx : null;
+}
+
+function enableShuffleFromTrack(trackIdx) {
+  shuffle = true;
+  btnShuffle.dataset.state = 'on';
+  const rest = tracks.map((_, i) => i).filter(i => i !== trackIdx);
+  order = [trackIdx, ...shuffleArray(rest)];
+  cursor = 0;
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -508,9 +515,20 @@ function initialCursorFromHash() {
     console.error(err);
     return;
   }
-  order = tracks.map((_, i) => i);
-  cursor = initialCursorFromHash();
+
+  const hashCursor = cursorFromHash();
+  if (hashCursor !== null) {
+    // Deep-link: respect the requested track, no auto-shuffle
+    order = tracks.map((_, i) => i);
+    cursor = hashCursor;
+  } else {
+    // First visit / no hash: pick a random track and turn shuffle on
+    const randomIdx = Math.floor(Math.random() * tracks.length);
+    enableShuffleFromTrack(randomIdx);
+  }
 
   renderTracklist();
-  await loadTrack(false);
+  // Try to autoplay. Browsers usually block this until a user gesture —
+  // if blocked, the track is loaded and the user just hits play.
+  await loadTrack(true);
 })();
