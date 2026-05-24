@@ -1,0 +1,185 @@
+{
+  "artist": "HAEMAMUL",
+  "tracks": [
+    {
+      "num": "01",
+      "title": "RED LINE",
+      "artist": "HAEMAMUL",
+      "file": "01. RED LINE.mp3",
+      "duration": 181.27,
+      "art": "assets/art/01.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "02",
+      "title": "Let me breathe",
+      "artist": "HAEMAMUL",
+      "file": "02. Let me breathe.mp3",
+      "duration": 182.23,
+      "art": "assets/art/02.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "03",
+      "title": "이번 크리스마스엔 그냥 떡볶이가 먹고 싶어",
+      "artist": "HAEMAMUL",
+      "file": "03. 이번 크리스마스엔 그냥 떡볶이가 먹고싶어.mp3",
+      "duration": 156.74,
+      "art": "assets/art/03.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "04",
+      "title": "공백의 궤적",
+      "artist": "HAEMAMUL",
+      "file": "04. 공백의 궤적.mp3",
+      "duration": 206.35,
+      "art": "assets/art/04.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "04.1",
+      "title": "공백의 궤적 Accoustic Ver.",
+      "artist": "HAEMAMUL",
+      "file": "04.1 공백의 궤적 Accoustic Ver.mp3",
+      "duration": 206.78,
+      "art": "assets/art/04.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "05",
+      "title": "엠퍼러 인 아델리 (Emperor in Adélie)",
+      "artist": "HAEMAMUL",
+      "file": "05. 엠퍼러 인 아델리 (Emperor in Adélie).mp3",
+      "duration": 184.99,
+      "art": "assets/art/05.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "05.1",
+      "title": "엠퍼러 인 아델리 (Emperor in Adélie) 어디서 들어본 멜로디 Ver",
+      "artist": "HAEMAMUL",
+      "file": "05.1 엠퍼러 인 아델리 (Emperor in Adélie) 어디선가 들어본 멜로디 Ver.mp3",
+      "duration": 211.1,
+      "art": "assets/art/05.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "06",
+      "title": "통통팝",
+      "artist": "HAEMAMUL",
+      "file": "06. 통통팝.mp3",
+      "duration": 135.02,
+      "art": "assets/art/06.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "07",
+      "title": "Crazy zombie (Edit)",
+      "artist": "HAEMAMUL",
+      "file": "07. Crazy zombie.mp3",
+      "duration": 214.56,
+      "art": "assets/art/07.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "08",
+      "title": "TAKE ME BACK",
+      "artist": "HAEMAMUL",
+      "file": "08. TAKE ME BACK.mp3",
+      "duration": 226.63,
+      "art": "assets/art/08.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "09",
+      "title": "Amazon drip",
+      "artist": "HAEMAMUL",
+      "file": "09. Amazon drip.mp3",
+      "duration": 237.74,
+      "art": "assets/art/09.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "10",
+      "title": "그래도 나는 여기야",
+      "artist": "HAEMAMUL",
+      "file": "10. 그래도 나는 여기야.mp3",
+      "duration": 153.02,
+      "art": "assets/art/10.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "11",
+      "title": "이상하지",
+      "artist": "HAEMAMUL",
+      "file": "11. 이상하지.mp3",
+      "duration": 224.33,
+      "art": "assets/art/11.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "12",
+      "title": "나는바다의파리",
+      "artist": "HAEMAMUL",
+      "file": "12. 나는바다의파리.mp3",
+      "duration": 152.04,
+      "art": "assets/art/12.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "13",
+      "title": "나는 당신의 무엇인가요",
+      "artist": "HAEMAMUL",
+      "file": "13. 나는 당신의 무엇인가요.mp3",
+      "duration": 198.02,
+      "art": "assets/art/13.jpg",
+      "lyrics": null,
+      "lyricsSource": null
+    },
+    {
+      "num": "14",
+      "title": "AI는 연애 상담을 하지 않아",
+      "artist": "HAEMAMUL",
+      "file": "14. AI는 연애 상담을 하지 않아.mp3",
+      "duration": 226.8,
+      "art": "assets/art/14.jpg",
+      "lyrics": "assets/lyrics/14.txt",
+      "lyricsSource": "sidecar"
+    },
+    {
+      "num": "15",
+      "title": "내일의 나는",
+      "artist": "HAEMAMUL",
+      "file": "15. 내일의 나는.mp3",
+      "duration": 253.03,
+      "art": "assets/art/15.jpg",
+      "lyrics": "assets/lyrics/15.txt",
+      "lyricsSource": "sidecar"
+    },
+    {
+      "num": "16",
+      "title": "세계멸망 전야제",
+      "artist": "HAEMAMUL",
+      "file": "16. 세계멸망 전야제.mp3",
+      "duration": 247.58,
+      "art": "assets/art/16.jpg",
+      "lyrics": "assets/lyrics/16.txt",
+      "lyricsSource": "sidecar"
+    }
+  ]
+}
