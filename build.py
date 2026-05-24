@@ -44,7 +44,11 @@ def slug(track_num: str) -> str:
     return f"{int(track_num):02d}"
 
 
-def extract_art(audio: MP3, dest: Path) -> str | None:
+ART_EXTS = ("jpg", "jpeg", "png")
+
+
+def extract_art(audio: MP3, dest_dir: Path, track_num: str) -> str | None:
+    """Write the first APIC frame to dest_dir/{track_num}.{ext}. Returns filename or None."""
     if not audio.tags:
         return None
     for key in audio.tags.keys():
@@ -53,10 +57,19 @@ def extract_art(audio: MP3, dest: Path) -> str | None:
             ext = "jpg"
             if apic.mime and "png" in apic.mime.lower():
                 ext = "png"
-            out = dest.with_suffix(f".{ext}")
+            # Avoid Path.with_suffix() — it would mangle "04.1" (treats ".1" as suffix).
+            out = dest_dir / f"{track_num}.{ext}"
             out.write_bytes(apic.data)
             return out.name
     return None
+
+
+def remove_existing_art(track_num: str) -> None:
+    """Delete this track's prior art files. Explicit list avoids glob('04.*') eating 04.1."""
+    for ext in ART_EXTS:
+        p = ART_DIR / f"{track_num}.{ext}"
+        if p.exists():
+            p.unlink()
 
 
 def extract_lyrics(audio: MP3) -> str | None:
@@ -119,10 +132,8 @@ def main() -> None:
         duration = float(audio.info.length)
 
         # Album art: always re-extract (build owns NN.jpg). Overwrites previous.
-        art_stem = ART_DIR / track_num
-        for old in ART_DIR.glob(f"{track_num}.*"):
-            old.unlink()
-        art_name = extract_art(audio, art_stem)
+        remove_existing_art(track_num)
+        art_name = extract_art(audio, ART_DIR, track_num)
 
         # Lyrics resolution:
         #   1. NN.manual.txt  → your manual override, build never touches it

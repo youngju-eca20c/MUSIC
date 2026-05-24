@@ -43,11 +43,11 @@
     },
     {
       "num": "04.1",
-      "title": "공백의 궤적 Accoustic Ver.",
+      "title": "공백의 궤적 Accoustic Ver",
       "artist": "HAEMAMUL",
       "file": "04.1 공백의 궤적 Accoustic Ver.mp3",
-      "duration": 206.78,
-      "art": "assets/art/04.jpg",
+      "duration": 244.22,
+      "art": "assets/art/04.1.jpg",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -67,7 +67,7 @@
       "artist": "HAEMAMUL",
       "file": "05.1 엠퍼러 인 아델리 (Emperor in Adélie) 어디선가 들어본 멜로디 Ver.mp3",
       "duration": 211.1,
-      "art": "assets/art/05.jpg",
+      "art": "assets/art/05.1.jpg",
       "lyrics": null,
       "lyricsSource": null
     },
