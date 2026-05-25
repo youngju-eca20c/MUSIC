@@ -509,20 +509,11 @@ function closeCarousel() {
   }, 300);
 }
 
-// Re-tile when the viewport changes (orientation, window resize).
-window.addEventListener('resize', () => {
-  if (carouselEl.classList.contains('open') && carouselGrid.children.length) {
-    layoutDiamonds();
-  }
-});
-
 function buildCarouselCards() {
   carouselGrid.innerHTML = '';
 
   if (carouselIdxs.length === 0) {
     carouselEmpty.hidden = false;
-    carouselGrid.style.height = '0px';
-    carouselGrid.style.width = '0px';
     return;
   }
   carouselEmpty.hidden = true;
@@ -546,8 +537,8 @@ function buildCarouselCards() {
       : '';
 
     cell.innerHTML = `
-      <div class="grid-diamond">
-        <div class="grid-art">${imgHtml}</div>
+      <div class="grid-art-wrap">
+        ${imgHtml}
         ${heartHtml}
         <div class="grid-now-playing">NOW PLAYING</div>
       </div>
@@ -557,56 +548,8 @@ function buildCarouselCards() {
     cell.addEventListener('click', () => playTrack(trackIdx));
     carouselGrid.appendChild(cell);
   });
-
-  layoutDiamonds();
 }
 
-/** Read a px-valued CSS custom property from the grid (computed style). */
-function getCssPx(name, fallback) {
-  const v = getComputedStyle(carouselGrid).getPropertyValue(name);
-  const n = parseInt(v, 10);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
-}
-
-/**
- * Position cells as an aligned diamond grid (no zigzag offset).
- * With labels eating the vertical space anyway, the offset rows weren't
- * really interlocking — just looked off-balance, especially on mobile
- * where you only get 2 cols. Keep rows aligned, rotated art only.
- */
-function layoutDiamonds() {
-  const cells = carouselGrid.children;
-  if (cells.length === 0) return;
-
-  const D = getCssPx('--d', 108);
-  const LABEL_H = getCssPx('--label-h', 28);
-  const GAP_X = 14;   // horizontal breathing room
-  const GAP_Y = 6;    // breathing room below label before next row
-  const STEP = D + GAP_X;
-  const VERT_STEP = D + LABEL_H + GAP_Y;
-
-  // Stage has 20px side padding in CSS; subtract both sides.
-  const stageWidth = carouselStage.clientWidth - 24;
-
-  // Rightmost edge at (cols - 1) * STEP + D <= stageWidth
-  const cols = Math.max(2, Math.floor((stageWidth - D) / STEP) + 1);
-
-  let maxRow = 0;
-  for (let i = 0; i < cells.length; i++) {
-    const rowIdx = Math.floor(i / cols);
-    const colInRow = i % cols;
-
-    cells[i].style.left = (colInRow * STEP) + 'px';
-    cells[i].style.top = (rowIdx * VERT_STEP) + 'px';
-
-    if (rowIdx > maxRow) maxRow = rowIdx;
-  }
-
-  const width = (cols - 1) * STEP + D;
-  const height = maxRow * VERT_STEP + D + LABEL_H;
-  carouselGrid.style.width = width + 'px';
-  carouselGrid.style.height = height + 'px';
-}
 
 function playTrack(trackIdx) {
   hasStarted = true;
