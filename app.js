@@ -36,19 +36,13 @@ const btnLike = $('btn-like');
 const btnHeartList = $('btn-heart-list');
 const brandHeart = $('brand-heart');
 
-// Carousel overlay
+// Track picker (diamond grid)
 const carouselEl = $('carousel');
 const carouselStage = $('carousel-stage');
 const carouselEmpty = $('carousel-empty');
 const carouselModeEl = $('carousel-mode');
-const carouselNumEl = $('carousel-num');
-const carouselTitleEl = $('carousel-title');
-const carouselDurEl = $('carousel-dur');
-const carouselLikeEl = $('carousel-like');
-const carouselPagerEl = $('carousel-pager');
 const btnCarouselClose = $('btn-carousel-close');
 const btnCarouselJump = $('btn-carousel-jump');
-const btnCarouselPlay = $('btn-carousel-play');
 
 const bgA = $('bg-a');
 const bgB = $('bg-b');
@@ -470,24 +464,12 @@ btnShuffle.addEventListener('click', toggleShuffle);
 btnRepeat.addEventListener('click', cycleRepeat);
 
 // ────────────────────────────────────────────────────────────────
-//  Carousel overlay (Coverflow-style track picker)
+//  Track picker — rotated-diamond grid
 // ────────────────────────────────────────────────────────────────
-const HEART_SVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+const HEART_SVG = `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
 
 let carouselMode = 'all';   // 'all' | 'liked'
-let carouselIdxs = [];      // track indices visible in the carousel
-let carouselCursor = 0;     // index into carouselIdxs
-let dragStartX = null;      // pointer x at drag start
-let dragOffset = 0;         // current drag delta (px)
-let wheelLock = false;      // throttle wheel events
-let lastBgArt = null;       // avoid re-extracting colors for the same art
-
-/** px between centers of adjacent cards. Read from CSS card-size. */
-function cardSpacing() {
-  const card = carouselStage.querySelector('.carousel-card');
-  const size = card ? card.offsetWidth : 280;
-  return Math.round(size * 0.78);
-}
+let carouselIdxs = [];      // track indices currently shown in the grid
 
 function openCarousel(mode = 'all') {
   carouselMode = mode;
@@ -497,11 +479,6 @@ function openCarousel(mode = 'all') {
 
   carouselModeEl.textContent = mode === 'liked' ? '좋아하는 곡' : '전체 곡';
 
-  // Initial cursor: currently playing track if visible, otherwise 0
-  const currentIdx = order[cursor];
-  const found = carouselIdxs.indexOf(currentIdx);
-  carouselCursor = found >= 0 ? found : 0;
-
   buildCarouselCards();
 
   carouselEl.hidden = false;
@@ -509,6 +486,9 @@ function openCarousel(mode = 'all') {
   // Force reflow so the open transition runs from the hidden state
   void carouselEl.offsetWidth;
   carouselEl.classList.add('open');
+
+  // Scroll the currently-playing diamond into view (if it's in the grid).
+  requestAnimationFrame(() => scrollCurrentIntoView('auto'));
 }
 
 function closeCarousel() {
@@ -525,106 +505,44 @@ function buildCarouselCards() {
 
   if (carouselIdxs.length === 0) {
     carouselEmpty.hidden = false;
-    carouselNumEl.textContent = '—';
-    carouselTitleEl.textContent = '곡이 없어요';
-    carouselDurEl.textContent = '';
-    carouselLikeEl.hidden = true;
-    carouselPagerEl.textContent = '0 / 0';
-    btnCarouselPlay.disabled = true;
-    btnCarouselPlay.style.opacity = '0.4';
-    btnCarouselPlay.style.pointerEvents = 'none';
     return;
   }
-
   carouselEmpty.hidden = true;
-  btnCarouselPlay.disabled = false;
-  btnCarouselPlay.style.opacity = '';
-  btnCarouselPlay.style.pointerEvents = '';
 
   const currentTrackIdx = order[cursor];
-  carouselIdxs.forEach((trackIdx, pos) => {
+  carouselIdxs.forEach((trackIdx) => {
     const t = tracks[trackIdx];
-    const card = document.createElement('div');
-    card.className = 'carousel-card';
-    card.setAttribute('role', 'option');
-    card.dataset.pos = String(pos);
-    if (trackIdx === currentTrackIdx) card.classList.add('is-current');
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    cell.setAttribute('role', 'option');
+    cell.dataset.trackIdx = String(trackIdx);
+    if (trackIdx === currentTrackIdx) cell.classList.add('is-current');
 
     const imgHtml = t.art
       ? `<img src="${encodeURI(t.art)}" alt="" draggable="false">`
       : '';
-    const heartHtml = liked.has(t.num) ? `<div class="card-heart">${HEART_SVG}</div>` : '';
-    const playingHtml = `<div class="card-playing">NOW PLAYING</div>`;
-    card.innerHTML = imgHtml + heartHtml + playingHtml;
+    const heartHtml = liked.has(t.num)
+      ? `<div class="grid-heart" title="좋아하는 곡">${HEART_SVG}</div>`
+      : '';
+    const playingHtml = `<div class="grid-now-playing">NOW PLAYING</div>`;
 
-    card.addEventListener('click', (ev) => {
-      // Ignore clicks fired immediately after a drag (jitter).
-      if (Math.abs(dragOffset) > 6) return;
-      const targetPos = Number(card.dataset.pos);
-      if (targetPos === carouselCursor) {
-        playSelected();
-      } else {
-        carouselCursor = targetPos;
-        positionCards(true);
-        updateCarouselMeta();
-      }
-    });
-    carouselStage.appendChild(card);
+    cell.innerHTML = `
+      <div class="grid-art-wrap">
+        ${heartHtml}
+        <div class="grid-art">${imgHtml}</div>
+        ${playingHtml}
+      </div>
+      <div class="grid-label">
+        <span class="grid-label-num">TRACK ${t.num}</span>${escapeHtml(t.title)}
+      </div>
+    `;
+
+    cell.addEventListener('click', () => playTrack(trackIdx));
+    carouselStage.appendChild(cell);
   });
-  positionCards(false);
-  updateCarouselMeta();
 }
 
-function positionCards(animate = true) {
-  const spacing = cardSpacing();
-  const cards = carouselStage.children;
-  for (let i = 0; i < cards.length; i++) {
-    const card = cards[i];
-    const offset = i - carouselCursor;
-    const abs = Math.abs(offset);
-    const x = offset * spacing + dragOffset;
-    // Scale falls off with distance; opacity hides far cards entirely.
-    let scale, opacity;
-    if (abs === 0) { scale = 1; opacity = 1; }
-    else if (abs === 1) { scale = 0.74; opacity = 0.7; }
-    else if (abs === 2) { scale = 0.56; opacity = 0.35; }
-    else { scale = 0.5; opacity = 0; }
-
-    card.style.transition = animate ? '' : 'none';
-    card.style.transform = `translateX(${x}px) scale(${scale})`;
-    card.style.opacity = String(opacity);
-    card.style.zIndex = String(100 - abs);
-    card.style.pointerEvents = abs <= 1 ? 'auto' : 'none';
-    card.classList.toggle('focused', abs === 0);
-  }
-}
-
-function updateCarouselMeta() {
-  if (carouselIdxs.length === 0) return;
-  const t = tracks[carouselIdxs[carouselCursor]];
-  carouselNumEl.textContent = `TRACK ${t.num}`;
-  carouselTitleEl.textContent = t.title;
-  carouselDurEl.textContent = fmtTime(t.duration);
-  carouselLikeEl.hidden = !liked.has(t.num);
-  carouselPagerEl.textContent = `${carouselCursor + 1} / ${carouselIdxs.length}`;
-  // Live background preview — show the focused art's color while browsing.
-  if (t.art && t.art !== lastBgArt) {
-    lastBgArt = t.art;
-    setBackground(encodeURI(t.art));
-  }
-}
-
-function carouselGo(delta) {
-  const next = Math.max(0, Math.min(carouselIdxs.length - 1, carouselCursor + delta));
-  if (next === carouselCursor) return;
-  carouselCursor = next;
-  positionCards(true);
-  updateCarouselMeta();
-}
-
-function playSelected() {
-  if (carouselIdxs.length === 0) return;
-  const trackIdx = carouselIdxs[carouselCursor];
+function playTrack(trackIdx) {
   if (carouselMode === 'liked') {
     enterHeartMode(trackIdx);
   } else {
@@ -636,75 +554,29 @@ function playSelected() {
   closeCarousel();
 }
 
-function jumpToCurrent() {
+/** Used by toggleLike to refresh heart markers if the picker is open. */
+function updateCarouselMeta() {
+  if (!carouselEl.classList.contains('open')) return;
+  // Cheapest: rebuild. Grid is small.
+  buildCarouselCards();
+}
+
+function scrollCurrentIntoView(behavior = 'smooth') {
   const currentIdx = order[cursor];
-  const found = carouselIdxs.indexOf(currentIdx);
-  if (found < 0) return;
-  carouselCursor = found;
-  positionCards(true);
-  updateCarouselMeta();
+  const target = carouselStage.querySelector(`.grid-cell[data-track-idx="${currentIdx}"]`);
+  if (target) target.scrollIntoView({ block: 'center', behavior });
 }
 
-// ----- Touch / mouse drag -----
-function onCarouselPointerDown(ev) {
-  if (carouselIdxs.length === 0) return;
-  dragStartX = ev.clientX;
-  dragOffset = 0;
-  carouselStage.classList.add('dragging');
-  try { carouselStage.setPointerCapture(ev.pointerId); } catch {}
-}
-function onCarouselPointerMove(ev) {
-  if (dragStartX == null) return;
-  dragOffset = ev.clientX - dragStartX;
-  positionCards(false);
-}
-function onCarouselPointerUp() {
-  if (dragStartX == null) return;
-  const threshold = cardSpacing() * 0.25;
-  carouselStage.classList.remove('dragging');
-  if (dragOffset > threshold) {
-    dragOffset = 0;
-    carouselGo(-1);
-  } else if (dragOffset < -threshold) {
-    dragOffset = 0;
-    carouselGo(1);
-  } else {
-    dragOffset = 0;
-    positionCards(true);
-  }
-  dragStartX = null;
+function jumpToCurrent() {
+  scrollCurrentIntoView('smooth');
 }
 
-// ----- Wheel (desktop) -----
-function onCarouselWheel(ev) {
-  if (wheelLock) { ev.preventDefault(); return; }
-  // Dominant axis decides direction so vertical scrolls also work.
-  const delta = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
-  if (Math.abs(delta) < 4) return;
-  ev.preventDefault();
-  wheelLock = true;
-  setTimeout(() => { wheelLock = false; }, 220);
-  carouselGo(delta > 0 ? 1 : -1);
-}
-
-// Wire carousel handlers
+// Wire picker handlers
 btnTracklist.addEventListener('click', () => openCarousel('all'));
 btnHeartList.addEventListener('click', () => openCarousel('liked'));
 btnLike.addEventListener('click', toggleLike);
 btnCarouselClose.addEventListener('click', closeCarousel);
 btnCarouselJump.addEventListener('click', jumpToCurrent);
-btnCarouselPlay.addEventListener('click', playSelected);
-
-carouselStage.addEventListener('pointerdown', onCarouselPointerDown);
-carouselStage.addEventListener('pointermove', onCarouselPointerMove);
-carouselStage.addEventListener('pointerup', onCarouselPointerUp);
-carouselStage.addEventListener('pointercancel', onCarouselPointerUp);
-carouselStage.addEventListener('wheel', onCarouselWheel, { passive: false });
-
-window.addEventListener('resize', () => {
-  if (!carouselEl.classList.contains('open')) return;
-  positionCards(false);
-});
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({
@@ -718,16 +590,12 @@ function escapeHtml(s) {
 document.addEventListener('keydown', (ev) => {
   if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
 
-  // Carousel takes over arrow keys / Enter when open
-  if (carouselEl.classList.contains('open')) {
-    switch (ev.key) {
-      case 'ArrowLeft':  ev.preventDefault(); carouselGo(-1); return;
-      case 'ArrowRight': ev.preventDefault(); carouselGo(1); return;
-      case 'Enter':
-      case ' ':
-        ev.preventDefault(); playSelected(); return;
-      case 'Escape':     ev.preventDefault(); closeCarousel(); return;
-    }
+  // Picker grid is open: only intercept Escape to close it.
+  // Other keys fall through to main player so playback still works.
+  if (carouselEl.classList.contains('open') && ev.key === 'Escape') {
+    ev.preventDefault();
+    closeCarousel();
+    return;
   }
 
   switch (ev.key) {
