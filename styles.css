@@ -580,14 +580,16 @@ button {
 }
 .grid-cell.is-current .grid-now-playing { display: block; }
 
-/* Title label below the diamond */
+/* Title label below the diamond — kept within the cell width so
+   adjacent labels don't bleed into each other. Long titles get
+   ellipsised after two lines. */
 .grid-label {
   position: absolute;
   top: var(--d);
-  left: -10%;
-  width: 120%;
+  left: 0;
+  width: 100%;
   height: var(--label-h);
-  padding: 4px 4px 0;
+  padding: 4px 2px 0;
   text-align: center;
   font-size: 10.5px;
   line-height: 1.25;
