@@ -546,9 +546,12 @@ function buildCarouselCards() {
       : '';
 
     cell.innerHTML = `
-      <div class="grid-art">${imgHtml}</div>
-      ${heartHtml}
-      <div class="grid-now-playing">NOW PLAYING</div>
+      <div class="grid-diamond">
+        <div class="grid-art">${imgHtml}</div>
+        ${heartHtml}
+        <div class="grid-now-playing">NOW PLAYING</div>
+      </div>
+      <div class="grid-label">${escapeHtml(t.title)}</div>
     `;
 
     cell.addEventListener('click', () => playTrack(trackIdx));
@@ -558,47 +561,47 @@ function buildCarouselCards() {
   layoutDiamonds();
 }
 
-/** Read --d from the grid's computed style so JS stays in sync with CSS. */
-function getDiamondSize() {
-  const v = getComputedStyle(carouselGrid).getPropertyValue('--d');
+/** Read a px-valued CSS custom property from the grid (computed style). */
+function getCssPx(name, fallback) {
+  const v = getComputedStyle(carouselGrid).getPropertyValue(name);
   const n = parseInt(v, 10);
-  return Number.isFinite(n) && n > 0 ? n : 108;
+  return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
 /**
- * Position cells as a tessellated diamond grid. STEP (= D + GAP) controls
- * center-to-center distance, so neighbouring diamonds sit a small gap
- * apart instead of touching flush. Odd rows shift right by STEP/2 and
- * down by STEP/2 to interlock with even rows.
+ * Position cells as an offset diamond grid (rhythm-game style):
+ *   • Diamonds in a row touch via small horizontal gap (STEP = D + GAP_X).
+ *   • Each row's diamonds get a title label below them (LABEL_H).
+ *   • The next row sits just below the labels and is shifted by STEP/2
+ *     so its diamonds interlock with the row above's gaps.
  */
 function layoutDiamonds() {
   const cells = carouselGrid.children;
   if (cells.length === 0) return;
 
-  const D = getDiamondSize();
-  const GAP = 6;          // breathing room between adjacent diamonds (px)
-  const STEP = D + GAP;
+  const D = getCssPx('--d', 108);
+  const LABEL_H = getCssPx('--label-h', 28);
+  const GAP_X = 14;   // breathing room between same-row diamonds
+  const GAP_Y = 6;    // breathing room between label and next row
+  const STEP = D + GAP_X;
   const HALF_STEP = STEP / 2;
+  const VERT_STEP = D + LABEL_H + GAP_Y;
 
-  // Account for stage's horizontal padding (20px each side, see CSS).
+  // Stage has 20px side padding in CSS; subtract both sides.
   const stageWidth = carouselStage.clientWidth - 24;
 
-  // Odd row's rightmost edge sits at (cols-1)*STEP + HALF_STEP + D.
-  // Require that <= stageWidth:
-  //   cols <= (stageWidth - HALF_STEP - D) / STEP + 1
+  // Odd row extends HALF_STEP further right than even row, so fit that.
+  //   (cols - 1) * STEP + HALF_STEP + D <= stageWidth
   const cols = Math.max(2, Math.floor((stageWidth - HALF_STEP - D) / STEP) + 1);
-  const pairSize = cols * 2;
 
   let maxRow = 0;
   for (let i = 0; i < cells.length; i++) {
-    const pairIdx = Math.floor(i / pairSize);
-    const inPair = i % pairSize;
-    const isOddRow = inPair >= cols;
-    const colInRow = isOddRow ? inPair - cols : inPair;
-    const rowIdx = pairIdx * 2 + (isOddRow ? 1 : 0);
+    const rowIdx = Math.floor(i / cols);
+    const colInRow = i % cols;
+    const isOddRow = rowIdx % 2 === 1;
 
     const x = colInRow * STEP + (isOddRow ? HALF_STEP : 0);
-    const y = rowIdx * HALF_STEP;
+    const y = rowIdx * VERT_STEP;
 
     cells[i].style.left = x + 'px';
     cells[i].style.top = y + 'px';
@@ -607,7 +610,7 @@ function layoutDiamonds() {
   }
 
   const width = (cols - 1) * STEP + HALF_STEP + D;
-  const height = maxRow * HALF_STEP + D;
+  const height = maxRow * VERT_STEP + D + LABEL_H;
   carouselGrid.style.width = width + 'px';
   carouselGrid.style.height = height + 'px';
 }

@@ -7,7 +7,7 @@
       "artist": "HAEMAMUL",
       "file": "01. RED LINE.mp3",
       "duration": 181.27,
-      "art": "assets/art/01.jpg",
+      "art": "album art/Red LIne.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -17,7 +17,7 @@
       "artist": "HAEMAMUL",
       "file": "02. Let me breathe.mp3",
       "duration": 182.23,
-      "art": "assets/art/02.jpg",
+      "art": "album art/let me breathe.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -27,7 +27,7 @@
       "artist": "HAEMAMUL",
       "file": "03. 이번 크리스마스엔 그냥 떡볶이가 먹고싶어.mp3",
       "duration": 156.74,
-      "art": "assets/art/03.jpg",
+      "art": "album art/떡볶이.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -37,7 +37,7 @@
       "artist": "HAEMAMUL",
       "file": "04. 공백의 궤적.mp3",
       "duration": 206.35,
-      "art": "assets/art/04.jpg",
+      "art": "album art/공백의 궤적.png",
       "lyrics": "assets/lyrics/04.manual.txt",
       "lyricsSource": "manual"
     },
@@ -47,7 +47,7 @@
       "artist": "HAEMAMUL",
       "file": "04.1 공백의 궤적 Accoustic Ver.mp3",
       "duration": 244.22,
-      "art": "assets/art/04.1.jpg",
+      "art": "album art/공백의 궤적.png",
       "lyrics": "assets/lyrics/04.1.manual.txt",
       "lyricsSource": "manual"
     },
@@ -57,7 +57,7 @@
       "artist": "HAEMAMUL",
       "file": "05. 엠퍼러 인 아델리 (Emperor in Adélie).mp3",
       "duration": 184.99,
-      "art": "assets/art/05.jpg",
+      "art": "album art/Emperor in Adelie.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -67,7 +67,7 @@
       "artist": "HAEMAMUL",
       "file": "05.1 엠퍼러 인 아델리 (Emperor in Adélie) 어디선가 들어본 멜로디 Ver.mp3",
       "duration": 211.1,
-      "art": "assets/art/05.1.jpg",
+      "art": "album art/Emperor in Adelie.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -127,7 +127,7 @@
       "artist": "HAEMAMUL",
       "file": "11. TAKE ME BACK.mp3",
       "duration": 226.63,
-      "art": "assets/art/11.jpg",
+      "art": "album art/TAKE ME BACK.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -147,7 +147,7 @@
       "artist": "HAEMAMUL",
       "file": "13. Amazon drip.mp3",
       "duration": 237.74,
-      "art": "assets/art/13.jpg",
+      "art": "album art/amazon drip.png",
       "lyrics": "assets/lyrics/13.manual.txt",
       "lyricsSource": "manual"
     },
@@ -167,7 +167,7 @@
       "artist": "HAEMAMUL",
       "file": "15. 나는바다의파리.mp3",
       "duration": 152.04,
-      "art": "assets/art/15.jpg",
+      "art": "album art/나는 바다의 파리.png",
       "lyrics": "assets/lyrics/15.manual.txt",
       "lyricsSource": "manual"
     },
@@ -177,7 +177,7 @@
       "artist": "HAEMAMUL",
       "file": "16. 나는 당신의 무엇인가요.mp3",
       "duration": 198.02,
-      "art": "assets/art/16.jpg",
+      "art": "album art/나는 당신의 무엇인가요.png",
       "lyrics": null,
       "lyricsSource": null
     },

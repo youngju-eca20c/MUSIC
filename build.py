@@ -21,6 +21,7 @@ import json
 import re
 import sys
 import io
+import unicodedata
 from pathlib import Path
 
 from mutagen.mp3 import MP3
@@ -31,6 +32,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 ROOT = Path(__file__).parent
 ART_DIR = ROOT / "assets" / "art"
 LYR_DIR = ROOT / "assets" / "lyrics"
+ALBUM_ART_DIR = ROOT / "album art"  # user-curated PNG overrides (higher priority)
 TRACK_RE = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+(.+?)\.mp3$", re.IGNORECASE)
 # Strip leading track-number prefixes from ID3 titles (e.g. "05.1 엠퍼러..." -> "엠퍼러...")
 TITLE_PREFIX_RE = re.compile(r"^\d+(?:\.\d+)?\.?\s+")
@@ -70,6 +72,42 @@ def remove_existing_art(track_num: str) -> None:
         p = ART_DIR / f"{track_num}.{ext}"
         if p.exists():
             p.unlink()
+
+
+def _normalize_title(s: str) -> str:
+    """Lowercase, strip accents / spaces / punctuation for fuzzy filename matching."""
+    s = unicodedata.normalize("NFD", s)
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    s = re.sub(r"[\s()\[\]{}.,'\"!?\-:;_]", "", s)
+    return s.lower()
+
+
+def find_album_art_override(title: str, title_from_file: str | None) -> Path | None:
+    """Match an MP3 to a PNG in album art/ by normalised title.
+    Exact match wins; otherwise a substring match (either direction) is enough."""
+    if not ALBUM_ART_DIR.exists():
+        return None
+    candidates = [_normalize_title(title)]
+    if title_from_file:
+        candidates.append(_normalize_title(title_from_file))
+    candidates = [c for c in candidates if c]
+
+    pngs = sorted(ALBUM_ART_DIR.glob("*.png"))
+    # First pass: exact normalized match.
+    for png in pngs:
+        norm = _normalize_title(png.stem)
+        if norm and norm in candidates:
+            return png
+    # Second pass: substring match — handles abbreviated names like
+    # "떡볶이.png" matching "이번 크리스마스엔 그냥 떡볶이가…".
+    for png in pngs:
+        norm = _normalize_title(png.stem)
+        if not norm:
+            continue
+        for cand in candidates:
+            if norm in cand or cand in norm:
+                return png
+    return None
 
 
 def extract_lyrics(audio: MP3) -> str | None:
@@ -131,9 +169,19 @@ def main() -> None:
         artist = str(tags.get("TPE1", "")).strip() if tags else ""
         duration = float(audio.info.length)
 
-        # Album art: always re-extract (build owns NN.jpg). Overwrites previous.
+        # Album art priority:
+        #   1. PNG in album art/ folder whose name matches the track title.
+        #   2. Otherwise re-extract APIC from the MP3 into assets/art/NN.jpg.
         remove_existing_art(track_num)
-        art_name = extract_art(audio, ART_DIR, track_num)
+        override = find_album_art_override(title, title_from_file)
+        if override:
+            art_rel = f"album art/{override.name}"
+            art_source = "override"
+            art_name = override.name  # only used for the [art] marker below
+        else:
+            art_name = extract_art(audio, ART_DIR, track_num)
+            art_rel = f"assets/art/{art_name}" if art_name else None
+            art_source = "id3" if art_name else None
 
         # Lyrics resolution:
         #   1. NN.manual.txt  → your manual override, build never touches it
@@ -163,14 +211,14 @@ def main() -> None:
             "artist": artist,
             "file": mp3.name,
             "duration": round(duration, 2),
-            "art": f"assets/art/{art_name}" if art_name else None,
+            "art": art_rel,
             "lyrics": lyrics_rel,
             "lyricsSource": lyrics_source,
         })
 
         marks = []
-        if art_name:
-            marks.append("art")
+        if art_rel:
+            marks.append(f"art({art_source})")
         if lyrics_rel:
             marks.append(f"lyr({lyrics_source})")
         print(f"  {track_num:6} {title[:40]:40} [{', '.join(marks) or '-'}]")

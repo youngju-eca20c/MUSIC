@@ -484,28 +484,38 @@ button {
 
 .carousel-grid {
   position: relative;
-  --d: 108px;   /* diamond bounding box size (rotated square's bbox) */
-  /* JS sets explicit width and height in px once cells are laid out */
+  --d: 108px;       /* diamond bounding box size */
+  --label-h: 28px;  /* space reserved for the title below each diamond */
 }
-@media (min-width: 600px) { .carousel-grid { --d: 140px; } }
-@media (min-width: 900px) { .carousel-grid { --d: 160px; } }
+@media (min-width: 600px) { .carousel-grid { --d: 140px; --label-h: 32px; } }
+@media (min-width: 900px) { .carousel-grid { --d: 160px; --label-h: 34px; } }
 
 .grid-cell {
   position: absolute;
   width: var(--d);
-  height: var(--d);
+  height: calc(var(--d) + var(--label-h));
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  /* Hit-area = diamond shape, so overlapping bounding boxes don't
-     intercept each other's clicks. */
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
   transition: filter 0.15s, transform 0.15s var(--transition);
 }
 .grid-cell:hover { filter: brightness(1.18); z-index: 10; }
 .grid-cell:active { transform: scale(0.96); }
+.grid-cell.is-current { z-index: 5; }
 
-/* The art is an INSCRIBED square inside the diamond bounding box —
-   side = D / √2 ≈ 70.7% of D. Rotated 45° fills the diamond exactly. */
+/* The diamond-shaped visual + hit area. Clip-path lives here so
+   overlapping cells don't steal each other's clicks on the empty
+   corners — and labels (below) stay unclipped. */
+.grid-diamond {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--d);
+  height: var(--d);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* Inscribed square inside the diamond bbox — side = D/√2 ≈ 70.7%.
+   Rotated 45° it fills the diamond shape exactly. */
 .grid-art {
   position: absolute;
   width: 70.71%;
@@ -515,7 +525,6 @@ button {
   transform: rotate(45deg);
   background: #222;
   overflow: hidden;
-  /* No border-radius — keeps the diamond edges crisp against neighbors. */
 }
 .grid-art img {
   width: 100%;
@@ -525,17 +534,14 @@ button {
   pointer-events: none;
 }
 
-/* Currently playing: red glow inside the diamond using box-shadow on the
-   rotated art (so it follows the diamond shape, not the cell bbox). */
-.grid-cell.is-current { z-index: 5; }
+/* Currently playing: red glow on the rotated art (follows diamond shape) */
 .grid-cell.is-current .grid-art {
   box-shadow:
     0 0 0 2px #ff4d6d,
     0 0 24px rgba(255, 77, 109, 0.55);
 }
 
-/* Heart badge — positioned INSIDE the visible diamond so clip-path
-   doesn't hide it. Placed near the top vertex. */
+/* Heart badge — positioned inside the visible diamond (top area) */
 .grid-heart {
   position: absolute;
   top: 16%;
@@ -553,7 +559,7 @@ button {
   pointer-events: none;
 }
 
-/* NOW PLAYING pill centered inside the diamond */
+/* NOW PLAYING pill at the diamond's centre */
 .grid-now-playing {
   position: absolute;
   top: 50%;
@@ -573,6 +579,33 @@ button {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 .grid-cell.is-current .grid-now-playing { display: block; }
+
+/* Title label below the diamond */
+.grid-label {
+  position: absolute;
+  top: var(--d);
+  left: -10%;
+  width: 120%;
+  height: var(--label-h);
+  padding: 4px 4px 0;
+  text-align: center;
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--fg-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: keep-all;
+  pointer-events: none;
+}
+.grid-cell.is-current .grid-label {
+  color: var(--fg);
+  font-weight: 700;
+}
+@media (min-width: 600px) {
+  .grid-label { font-size: 11.5px; }
+}
 
 /* Empty state (no liked songs yet) — overlays the grid */
 .carousel-empty {
