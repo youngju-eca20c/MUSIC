@@ -569,11 +569,10 @@ function getCssPx(name, fallback) {
 }
 
 /**
- * Position cells as an offset diamond grid (rhythm-game style):
- *   • Diamonds in a row touch via small horizontal gap (STEP = D + GAP_X).
- *   • Each row's diamonds get a title label below them (LABEL_H).
- *   • The next row sits just below the labels and is shifted by STEP/2
- *     so its diamonds interlock with the row above's gaps.
+ * Position cells as an aligned diamond grid (no zigzag offset).
+ * With labels eating the vertical space anyway, the offset rows weren't
+ * really interlocking — just looked off-balance, especially on mobile
+ * where you only get 2 cols. Keep rows aligned, rotated art only.
  */
 function layoutDiamonds() {
   const cells = carouselGrid.children;
@@ -581,35 +580,29 @@ function layoutDiamonds() {
 
   const D = getCssPx('--d', 108);
   const LABEL_H = getCssPx('--label-h', 28);
-  const GAP_X = 14;   // breathing room between same-row diamonds
-  const GAP_Y = 6;    // breathing room between label and next row
+  const GAP_X = 14;   // horizontal breathing room
+  const GAP_Y = 6;    // breathing room below label before next row
   const STEP = D + GAP_X;
-  const HALF_STEP = STEP / 2;
   const VERT_STEP = D + LABEL_H + GAP_Y;
 
   // Stage has 20px side padding in CSS; subtract both sides.
   const stageWidth = carouselStage.clientWidth - 24;
 
-  // Odd row extends HALF_STEP further right than even row, so fit that.
-  //   (cols - 1) * STEP + HALF_STEP + D <= stageWidth
-  const cols = Math.max(2, Math.floor((stageWidth - HALF_STEP - D) / STEP) + 1);
+  // Rightmost edge at (cols - 1) * STEP + D <= stageWidth
+  const cols = Math.max(2, Math.floor((stageWidth - D) / STEP) + 1);
 
   let maxRow = 0;
   for (let i = 0; i < cells.length; i++) {
     const rowIdx = Math.floor(i / cols);
     const colInRow = i % cols;
-    const isOddRow = rowIdx % 2 === 1;
 
-    const x = colInRow * STEP + (isOddRow ? HALF_STEP : 0);
-    const y = rowIdx * VERT_STEP;
-
-    cells[i].style.left = x + 'px';
-    cells[i].style.top = y + 'px';
+    cells[i].style.left = (colInRow * STEP) + 'px';
+    cells[i].style.top = (rowIdx * VERT_STEP) + 'px';
 
     if (rowIdx > maxRow) maxRow = rowIdx;
   }
 
-  const width = (cols - 1) * STEP + HALF_STEP + D;
+  const width = (cols - 1) * STEP + D;
   const height = maxRow * VERT_STEP + D + LABEL_H;
   carouselGrid.style.width = width + 'px';
   carouselGrid.style.height = height + 'px';
