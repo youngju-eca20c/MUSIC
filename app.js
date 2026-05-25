@@ -1,6 +1,7 @@
 // HAEMAMUL — Music Web App
 // Vanilla JS audio player with shuffle/repeat, color-extracted background,
-// album-art-to-lyrics flip, tracklist drawer, keyboard shortcuts, MediaSession.
+// album-art-to-lyrics flip, Coverflow-style track carousel, likes + heart
+// playlist mode, keyboard shortcuts, MediaSession.
 
 // ────────────────────────────────────────────────────────────────
 //  DOM refs
@@ -33,12 +34,21 @@ const btnRepeat = $('btn-repeat');
 const btnTracklist = $('btn-tracklist');
 const btnLike = $('btn-like');
 const btnHeartList = $('btn-heart-list');
-const btnCloseTracklist = $('btn-close-tracklist');
-const tracklistEl = $('tracklist');
-const tracklistItems = $('tracklist-items');
-const tracklistTitle = document.querySelector('.tracklist-title');
 const brandHeart = $('brand-heart');
-const scrim = $('scrim');
+
+// Carousel overlay
+const carouselEl = $('carousel');
+const carouselStage = $('carousel-stage');
+const carouselEmpty = $('carousel-empty');
+const carouselModeEl = $('carousel-mode');
+const carouselNumEl = $('carousel-num');
+const carouselTitleEl = $('carousel-title');
+const carouselDurEl = $('carousel-dur');
+const carouselLikeEl = $('carousel-like');
+const carouselPagerEl = $('carousel-pager');
+const btnCarouselClose = $('btn-carousel-close');
+const btnCarouselJump = $('btn-carousel-jump');
+const btnCarouselPlay = $('btn-carousel-play');
 
 const bgA = $('bg-a');
 const bgB = $('bg-b');
@@ -58,7 +68,6 @@ let bgFlip = false;       // toggle between bg-a and bg-b
 const LIKED_STORAGE_KEY = 'haemamul.liked';
 let liked = new Set();    // Set<trackNum>
 let heartMode = false;    // true when current queue is filtered to liked tracks
-let drawerMode = 'all';   // 'all' | 'liked' — which view the drawer currently shows
 
 // ────────────────────────────────────────────────────────────────
 //  Helpers
@@ -84,7 +93,10 @@ const shuffleArray = (arr) => {
 // ────────────────────────────────────────────────────────────────
 //  Color extraction (simple downsampled average + accent)
 // ────────────────────────────────────────────────────────────────
+const colorCache = new Map(); // imgSrc → [c1, c2]
+
 async function extractColors(imgSrc) {
+  if (colorCache.has(imgSrc)) return colorCache.get(imgSrc);
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -118,9 +130,15 @@ async function extractColors(imgSrc) {
       const pick = sorted.length ? sorted : [[40, 40, 60]];
       const c1 = darken(pick[0], 0.35);
       const c2 = darken(pick[1] || pick[0], 0.6);
-      resolve([rgb(c1), rgb(c2)]);
+      const result = [rgb(c1), rgb(c2)];
+      colorCache.set(imgSrc, result);
+      resolve(result);
     };
-    img.onerror = () => resolve(['#1a1a2a', '#0a0a0a']);
+    img.onerror = () => {
+      const fallback = ['#1a1a2a', '#0a0a0a'];
+      colorCache.set(imgSrc, fallback);
+      resolve(fallback);
+    };
     img.src = imgSrc;
   });
 }
@@ -212,7 +230,6 @@ async function loadTrack(autoplay = false) {
     try { await audio.play(); } catch { /* user gesture not yet given */ }
   }
 
-  updatePlayingItem();
   updateLikeButton();
   updateMediaSession();
   syncURL();
@@ -239,8 +256,8 @@ function toggleLike() {
   else liked.add(t.num);
   saveLiked();
   updateLikeButton();
-  // Refresh tracklist if currently rendered (so heart icons update)
-  if (tracklistEl.classList.contains('open')) renderTracklist();
+  // If carousel is open, refresh the focused card's heart marker
+  if (carouselEl.classList.contains('open')) updateCarouselMeta();
 }
 
 function updateLikeButton() {
@@ -453,74 +470,162 @@ btnShuffle.addEventListener('click', toggleShuffle);
 btnRepeat.addEventListener('click', cycleRepeat);
 
 // ────────────────────────────────────────────────────────────────
-//  Tracklist drawer (two modes: 'all' and 'liked')
+//  Carousel overlay (Coverflow-style track picker)
 // ────────────────────────────────────────────────────────────────
 const HEART_SVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
 
-function openTracklist(mode = 'all') {
-  drawerMode = mode;
-  renderTracklist();
-  tracklistEl.classList.add('open');
-  scrim.hidden = false;
-  requestAnimationFrame(() => scrim.classList.add('visible'));
-  tracklistEl.setAttribute('aria-hidden', 'false');
-  const playing = tracklistItems.querySelector('.playing');
-  if (playing) playing.scrollIntoView({ block: 'center' });
-}
-function closeTracklist() {
-  tracklistEl.classList.remove('open');
-  scrim.classList.remove('visible');
-  setTimeout(() => { scrim.hidden = true; }, 300);
-  tracklistEl.setAttribute('aria-hidden', 'true');
+let carouselMode = 'all';   // 'all' | 'liked'
+let carouselIdxs = [];      // track indices visible in the carousel
+let carouselCursor = 0;     // index into carouselIdxs
+let dragStartX = null;      // pointer x at drag start
+let dragOffset = 0;         // current drag delta (px)
+let wheelLock = false;      // throttle wheel events
+let lastBgArt = null;       // avoid re-extracting colors for the same art
+
+/** px between centers of adjacent cards. Read from CSS card-size. */
+function cardSpacing() {
+  const card = carouselStage.querySelector('.carousel-card');
+  const size = card ? card.offsetWidth : 280;
+  return Math.round(size * 0.78);
 }
 
-btnTracklist.addEventListener('click', () => openTracklist('all'));
-btnHeartList.addEventListener('click', () => openTracklist('liked'));
-btnLike.addEventListener('click', toggleLike);
-btnCloseTracklist.addEventListener('click', closeTracklist);
-scrim.addEventListener('click', closeTracklist);
-
-function renderTracklist() {
-  // Title
-  if (drawerMode === 'liked') {
-    tracklistTitle.innerHTML = `<span class="tracklist-title-heart">${HEART_SVG}</span>좋아하는 곡`;
-  } else {
-    tracklistTitle.textContent = 'Tracks';
-  }
-
-  // Items
-  tracklistItems.innerHTML = '';
-  const visibleIdxs = drawerMode === 'liked'
+function openCarousel(mode = 'all') {
+  carouselMode = mode;
+  carouselIdxs = mode === 'liked'
     ? tracks.map((t, i) => liked.has(t.num) ? i : -1).filter(i => i >= 0)
     : tracks.map((_, i) => i);
 
-  if (drawerMode === 'liked' && visibleIdxs.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'empty-state';
-    li.innerHTML = `좋아하는 곡이 아직 없어요.<br>곡을 들으면서 <span class="empty-state-heart">${HEART_SVG}</span> 버튼을 눌러보세요.`;
-    tracklistItems.appendChild(li);
+  carouselModeEl.textContent = mode === 'liked' ? '좋아하는 곡' : '전체 곡';
+
+  // Initial cursor: currently playing track if visible, otherwise 0
+  const currentIdx = order[cursor];
+  const found = carouselIdxs.indexOf(currentIdx);
+  carouselCursor = found >= 0 ? found : 0;
+
+  buildCarouselCards();
+
+  carouselEl.hidden = false;
+  carouselEl.setAttribute('aria-hidden', 'false');
+  // Force reflow so the open transition runs from the hidden state
+  void carouselEl.offsetWidth;
+  carouselEl.classList.add('open');
+}
+
+function closeCarousel() {
+  carouselEl.classList.remove('open');
+  carouselEl.setAttribute('aria-hidden', 'true');
+  setTimeout(() => {
+    carouselEl.hidden = true;
+    carouselStage.innerHTML = '';
+  }, 300);
+}
+
+function buildCarouselCards() {
+  carouselStage.innerHTML = '';
+
+  if (carouselIdxs.length === 0) {
+    carouselEmpty.hidden = false;
+    carouselNumEl.textContent = '—';
+    carouselTitleEl.textContent = '곡이 없어요';
+    carouselDurEl.textContent = '';
+    carouselLikeEl.hidden = true;
+    carouselPagerEl.textContent = '0 / 0';
+    btnCarouselPlay.disabled = true;
+    btnCarouselPlay.style.opacity = '0.4';
+    btnCarouselPlay.style.pointerEvents = 'none';
     return;
   }
 
-  visibleIdxs.forEach((i) => {
-    const t = tracks[i];
-    const isLiked = liked.has(t.num);
-    const li = document.createElement('li');
-    li.className = 'tracklist-item';
-    li.dataset.idx = String(i);
-    li.innerHTML = `
-      <div class="ti-num">${t.num}</div>
-      <div class="ti-title">${escapeHtml(t.title)}${t.lyrics ? '<span class="ti-lyr" title="가사 있음"></span>' : ''}${isLiked ? `<span class="ti-liked" title="좋아하는 곡">${HEART_SVG}</span>` : ''}</div>
-      <div class="ti-dur">${fmtTime(t.duration)}</div>
-    `;
-    li.addEventListener('click', () => playFromDrawer(i));
-    tracklistItems.appendChild(li);
+  carouselEmpty.hidden = true;
+  btnCarouselPlay.disabled = false;
+  btnCarouselPlay.style.opacity = '';
+  btnCarouselPlay.style.pointerEvents = '';
+
+  const currentTrackIdx = order[cursor];
+  carouselIdxs.forEach((trackIdx, pos) => {
+    const t = tracks[trackIdx];
+    const card = document.createElement('div');
+    card.className = 'carousel-card';
+    card.setAttribute('role', 'option');
+    card.dataset.pos = String(pos);
+    if (trackIdx === currentTrackIdx) card.classList.add('is-current');
+
+    const imgHtml = t.art
+      ? `<img src="${encodeURI(t.art)}" alt="" draggable="false">`
+      : '';
+    const heartHtml = liked.has(t.num) ? `<div class="card-heart">${HEART_SVG}</div>` : '';
+    const playingHtml = `<div class="card-playing">NOW PLAYING</div>`;
+    card.innerHTML = imgHtml + heartHtml + playingHtml;
+
+    card.addEventListener('click', (ev) => {
+      // Ignore clicks fired immediately after a drag (jitter).
+      if (Math.abs(dragOffset) > 6) return;
+      const targetPos = Number(card.dataset.pos);
+      if (targetPos === carouselCursor) {
+        playSelected();
+      } else {
+        carouselCursor = targetPos;
+        positionCards(true);
+        updateCarouselMeta();
+      }
+    });
+    carouselStage.appendChild(card);
   });
-  updatePlayingItem();
+  positionCards(false);
+  updateCarouselMeta();
 }
 
-function playFromDrawer(trackIdx) {
-  if (drawerMode === 'liked') {
+function positionCards(animate = true) {
+  const spacing = cardSpacing();
+  const cards = carouselStage.children;
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    const offset = i - carouselCursor;
+    const abs = Math.abs(offset);
+    const x = offset * spacing + dragOffset;
+    // Scale falls off with distance; opacity hides far cards entirely.
+    let scale, opacity;
+    if (abs === 0) { scale = 1; opacity = 1; }
+    else if (abs === 1) { scale = 0.74; opacity = 0.7; }
+    else if (abs === 2) { scale = 0.56; opacity = 0.35; }
+    else { scale = 0.5; opacity = 0; }
+
+    card.style.transition = animate ? '' : 'none';
+    card.style.transform = `translateX(${x}px) scale(${scale})`;
+    card.style.opacity = String(opacity);
+    card.style.zIndex = String(100 - abs);
+    card.style.pointerEvents = abs <= 1 ? 'auto' : 'none';
+    card.classList.toggle('focused', abs === 0);
+  }
+}
+
+function updateCarouselMeta() {
+  if (carouselIdxs.length === 0) return;
+  const t = tracks[carouselIdxs[carouselCursor]];
+  carouselNumEl.textContent = `TRACK ${t.num}`;
+  carouselTitleEl.textContent = t.title;
+  carouselDurEl.textContent = fmtTime(t.duration);
+  carouselLikeEl.hidden = !liked.has(t.num);
+  carouselPagerEl.textContent = `${carouselCursor + 1} / ${carouselIdxs.length}`;
+  // Live background preview — show the focused art's color while browsing.
+  if (t.art && t.art !== lastBgArt) {
+    lastBgArt = t.art;
+    setBackground(encodeURI(t.art));
+  }
+}
+
+function carouselGo(delta) {
+  const next = Math.max(0, Math.min(carouselIdxs.length - 1, carouselCursor + delta));
+  if (next === carouselCursor) return;
+  carouselCursor = next;
+  positionCards(true);
+  updateCarouselMeta();
+}
+
+function playSelected() {
+  if (carouselIdxs.length === 0) return;
+  const trackIdx = carouselIdxs[carouselCursor];
+  if (carouselMode === 'liked') {
     enterHeartMode(trackIdx);
   } else {
     if (heartMode) exitHeartMode();
@@ -528,15 +633,78 @@ function playFromDrawer(trackIdx) {
     cursor = pos >= 0 ? pos : 0;
   }
   loadTrack(true);
-  closeTracklist();
+  closeCarousel();
 }
 
-function updatePlayingItem() {
+function jumpToCurrent() {
   const currentIdx = order[cursor];
-  tracklistItems.querySelectorAll('.tracklist-item').forEach((el) => {
-    el.classList.toggle('playing', Number(el.dataset.idx) === currentIdx);
-  });
+  const found = carouselIdxs.indexOf(currentIdx);
+  if (found < 0) return;
+  carouselCursor = found;
+  positionCards(true);
+  updateCarouselMeta();
 }
+
+// ----- Touch / mouse drag -----
+function onCarouselPointerDown(ev) {
+  if (carouselIdxs.length === 0) return;
+  dragStartX = ev.clientX;
+  dragOffset = 0;
+  carouselStage.classList.add('dragging');
+  try { carouselStage.setPointerCapture(ev.pointerId); } catch {}
+}
+function onCarouselPointerMove(ev) {
+  if (dragStartX == null) return;
+  dragOffset = ev.clientX - dragStartX;
+  positionCards(false);
+}
+function onCarouselPointerUp() {
+  if (dragStartX == null) return;
+  const threshold = cardSpacing() * 0.25;
+  carouselStage.classList.remove('dragging');
+  if (dragOffset > threshold) {
+    dragOffset = 0;
+    carouselGo(-1);
+  } else if (dragOffset < -threshold) {
+    dragOffset = 0;
+    carouselGo(1);
+  } else {
+    dragOffset = 0;
+    positionCards(true);
+  }
+  dragStartX = null;
+}
+
+// ----- Wheel (desktop) -----
+function onCarouselWheel(ev) {
+  if (wheelLock) { ev.preventDefault(); return; }
+  // Dominant axis decides direction so vertical scrolls also work.
+  const delta = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+  if (Math.abs(delta) < 4) return;
+  ev.preventDefault();
+  wheelLock = true;
+  setTimeout(() => { wheelLock = false; }, 220);
+  carouselGo(delta > 0 ? 1 : -1);
+}
+
+// Wire carousel handlers
+btnTracklist.addEventListener('click', () => openCarousel('all'));
+btnHeartList.addEventListener('click', () => openCarousel('liked'));
+btnLike.addEventListener('click', toggleLike);
+btnCarouselClose.addEventListener('click', closeCarousel);
+btnCarouselJump.addEventListener('click', jumpToCurrent);
+btnCarouselPlay.addEventListener('click', playSelected);
+
+carouselStage.addEventListener('pointerdown', onCarouselPointerDown);
+carouselStage.addEventListener('pointermove', onCarouselPointerMove);
+carouselStage.addEventListener('pointerup', onCarouselPointerUp);
+carouselStage.addEventListener('pointercancel', onCarouselPointerUp);
+carouselStage.addEventListener('wheel', onCarouselWheel, { passive: false });
+
+window.addEventListener('resize', () => {
+  if (!carouselEl.classList.contains('open')) return;
+  positionCards(false);
+});
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({
@@ -549,6 +717,19 @@ function escapeHtml(s) {
 // ────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', (ev) => {
   if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
+
+  // Carousel takes over arrow keys / Enter when open
+  if (carouselEl.classList.contains('open')) {
+    switch (ev.key) {
+      case 'ArrowLeft':  ev.preventDefault(); carouselGo(-1); return;
+      case 'ArrowRight': ev.preventDefault(); carouselGo(1); return;
+      case 'Enter':
+      case ' ':
+        ev.preventDefault(); playSelected(); return;
+      case 'Escape':     ev.preventDefault(); closeCarousel(); return;
+    }
+  }
+
   switch (ev.key) {
     case ' ':
     case 'k':
@@ -567,12 +748,11 @@ document.addEventListener('keydown', (ev) => {
     case 'r': case 'R': cycleRepeat(); break;
     case 'l': case 'L': toggleLyrics(); break;
     case 't': case 'T':
-      tracklistEl.classList.contains('open') ? closeTracklist() : openTracklist('all');
+      carouselEl.classList.contains('open') ? closeCarousel() : openCarousel('all');
       break;
     case 'f': case 'F': toggleLike(); break;
     case 'Escape':
-      if (tracklistEl.classList.contains('open')) closeTracklist();
-      else if (artCard.classList.contains('flipped')) artCard.classList.remove('flipped');
+      if (artCard.classList.contains('flipped')) artCard.classList.remove('flipped');
       break;
   }
 });
@@ -652,7 +832,6 @@ function enableShuffleFromTrack(trackIdx) {
     enableShuffleFromTrack(randomIdx);
   }
 
-  renderTracklist();
   // Try to autoplay. Browsers usually block this until a user gesture —
   // if blocked, the track is loaded and the user just hits play.
   await loadTrack(true);
