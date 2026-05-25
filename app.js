@@ -500,13 +500,20 @@ function openCarousel(mode = 'all') {
   requestAnimationFrame(() => scrollCurrentIntoView('auto'));
 }
 
-function closeCarousel() {
+function closeCarousel({ instant = false } = {}) {
   carouselEl.classList.remove('open');
   carouselEl.setAttribute('aria-hidden', 'true');
-  setTimeout(() => {
+  if (instant) {
+    // No fade — used when a View Transition is handling the visual close
+    // so the picker is gone from the snapshot the browser captures next.
     carouselEl.hidden = true;
     carouselGrid.innerHTML = '';
-  }, 300);
+  } else {
+    setTimeout(() => {
+      carouselEl.hidden = true;
+      carouselGrid.innerHTML = '';
+    }, 300);
+  }
 }
 
 function buildCarouselCards() {
@@ -560,8 +567,32 @@ function playTrack(trackIdx) {
     const pos = order.indexOf(trackIdx);
     cursor = pos >= 0 ? pos : 0;
   }
-  loadTrack(true);
-  closeCarousel();
+
+  // Hero-style morph: the tapped tile's album art grows into the main
+  // player's album art. Uses the View Transitions API where available
+  // and falls back to an instant swap on older browsers.
+  const sourceImg = carouselGrid.querySelector(
+    `.grid-cell[data-track-idx="${trackIdx}"] .grid-art-wrap img`
+  );
+
+  if (typeof document.startViewTransition === 'function' && sourceImg) {
+    sourceImg.style.viewTransitionName = 'album-art-morph';
+    const transition = document.startViewTransition(() => {
+      // Within the DOM-update callback the picker tile is removed and the
+      // main player's <img> picks up the morph name — so only one element
+      // carries the name at any captured snapshot, which the spec requires.
+      sourceImg.style.viewTransitionName = '';
+      artImg.style.viewTransitionName = 'album-art-morph';
+      closeCarousel({ instant: true });
+      loadTrack(true);
+    });
+    transition.finished.finally(() => {
+      artImg.style.viewTransitionName = '';
+    });
+  } else {
+    closeCarousel();
+    loadTrack(true);
+  }
 }
 
 /** Used by toggleLike to refresh heart markers if the picker is open. */

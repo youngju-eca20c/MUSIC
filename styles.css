@@ -427,6 +427,19 @@ button {
    Track picker — rotated-diamond grid (rhythm-game style)
    ============================================================ */
 
+/* View Transitions API (Chrome/Edge 111+, Safari 18+) — drives the
+   hero morph from a picker tile to the main player's album art. */
+::view-transition-old(album-art-morph),
+::view-transition-new(album-art-morph) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: ease-out;
+}
+
 .carousel {
   position: fixed;
   inset: 0;
