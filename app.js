@@ -36,9 +36,10 @@ const btnLike = $('btn-like');
 const btnHeartList = $('btn-heart-list');
 const brandHeart = $('brand-heart');
 
-// Track picker (diamond grid)
+// Track picker (tessellated diamond grid)
 const carouselEl = $('carousel');
 const carouselStage = $('carousel-stage');
+const carouselGrid = $('carousel-grid');
 const carouselEmpty = $('carousel-empty');
 const carouselModeEl = $('carousel-mode');
 const btnCarouselClose = $('btn-carousel-close');
@@ -496,15 +497,24 @@ function closeCarousel() {
   carouselEl.setAttribute('aria-hidden', 'true');
   setTimeout(() => {
     carouselEl.hidden = true;
-    carouselStage.innerHTML = '';
+    carouselGrid.innerHTML = '';
   }, 300);
 }
 
+// Re-tile when the viewport changes (orientation, window resize).
+window.addEventListener('resize', () => {
+  if (carouselEl.classList.contains('open') && carouselGrid.children.length) {
+    layoutDiamonds();
+  }
+});
+
 function buildCarouselCards() {
-  carouselStage.innerHTML = '';
+  carouselGrid.innerHTML = '';
 
   if (carouselIdxs.length === 0) {
     carouselEmpty.hidden = false;
+    carouselGrid.style.height = '0px';
+    carouselGrid.style.width = '0px';
     return;
   }
   carouselEmpty.hidden = true;
@@ -516,30 +526,75 @@ function buildCarouselCards() {
     cell.className = 'grid-cell';
     cell.setAttribute('role', 'option');
     cell.dataset.trackIdx = String(trackIdx);
+    cell.title = `${t.num}. ${t.title}`;  // browser tooltip on hover
     if (trackIdx === currentTrackIdx) cell.classList.add('is-current');
 
     const imgHtml = t.art
       ? `<img src="${encodeURI(t.art)}" alt="" draggable="false">`
       : '';
     const heartHtml = liked.has(t.num)
-      ? `<div class="grid-heart" title="좋아하는 곡">${HEART_SVG}</div>`
+      ? `<div class="grid-heart" aria-label="좋아하는 곡">${HEART_SVG}</div>`
       : '';
-    const playingHtml = `<div class="grid-now-playing">NOW PLAYING</div>`;
 
     cell.innerHTML = `
-      <div class="grid-art-wrap">
-        ${heartHtml}
-        <div class="grid-art">${imgHtml}</div>
-        ${playingHtml}
-      </div>
-      <div class="grid-label">
-        <span class="grid-label-num">TRACK ${t.num}</span>${escapeHtml(t.title)}
-      </div>
+      <div class="grid-art">${imgHtml}</div>
+      ${heartHtml}
+      <div class="grid-now-playing">NOW PLAYING</div>
     `;
 
     cell.addEventListener('click', () => playTrack(trackIdx));
-    carouselStage.appendChild(cell);
+    carouselGrid.appendChild(cell);
   });
+
+  layoutDiamonds();
+}
+
+/**
+ * Position cells as a tessellated diamond grid. Each cell's bounding box
+ * is D×D and contains an inscribed diamond. Two interlocked rows form a
+ * "pair"; odd rows are shifted right by D/2 and down by D/2 so their
+ * top/bottom vertices meet the even rows' side vertices.
+ */
+function layoutDiamonds() {
+  const cells = carouselGrid.children;
+  if (cells.length === 0) return;
+
+  // Pull diamond size from CSS so it stays in sync with responsive breakpoints.
+  const probe = cells[0];
+  const D = probe.offsetWidth || 122;
+  const halfD = D / 2;
+
+  // How many full diamonds fit horizontally? Even rows span N×D wide; odd
+  // rows start at D/2 and span (N-1)×D + (D/2 + D/2) = N×D too — so both
+  // rows fit in the same width.
+  const stageWidth = carouselStage.clientWidth - 20; // account for padding
+  const cols = Math.max(2, Math.floor(stageWidth / D));
+  const pairSize = cols * 2;
+
+  let maxRow = 0;
+  for (let i = 0; i < cells.length; i++) {
+    const pairIdx = Math.floor(i / pairSize);
+    const inPair = i % pairSize;
+    const isOddRow = inPair >= cols;
+    const colInRow = isOddRow ? inPair - cols : inPair;
+    const rowIdx = pairIdx * 2 + (isOddRow ? 1 : 0);
+
+    const x = colInRow * D + (isOddRow ? halfD : 0);
+    const y = rowIdx * halfD;
+
+    cells[i].style.left = x + 'px';
+    cells[i].style.top = y + 'px';
+
+    if (rowIdx > maxRow) maxRow = rowIdx;
+  }
+
+  // Container needs to be the bounding box of the laid-out cells.
+  // Width: cols*D for even rows; odd rows extend D/2 further but
+  // we accept that within the stage's padding.
+  const width = cols * D + halfD;  // include odd-row trailing edge
+  const height = maxRow * halfD + D;
+  carouselGrid.style.width = width + 'px';
+  carouselGrid.style.height = height + 'px';
 }
 
 function playTrack(trackIdx) {
@@ -563,7 +618,7 @@ function updateCarouselMeta() {
 
 function scrollCurrentIntoView(behavior = 'smooth') {
   const currentIdx = order[cursor];
-  const target = carouselStage.querySelector(`.grid-cell[data-track-idx="${currentIdx}"]`);
+  const target = carouselGrid.querySelector(`.grid-cell[data-track-idx="${currentIdx}"]`);
   if (target) target.scrollIntoView({ block: 'center', behavior });
 }
 
