@@ -471,6 +471,7 @@ const HEART_SVG = `<svg viewBox="0 0 24 24" width="13" height="13" fill="current
 
 let carouselMode = 'all';   // 'all' | 'liked'
 let carouselIdxs = [];      // track indices currently shown in the grid
+let hasStarted = false;     // true once the user has picked & played a track
 
 function openCarousel(mode = 'all') {
   carouselMode = mode;
@@ -480,15 +481,22 @@ function openCarousel(mode = 'all') {
 
   carouselModeEl.textContent = mode === 'liked' ? '좋아하는 곡' : '전체 곡';
 
-  buildCarouselCards();
+  // On the first visit (no track started yet) the close/jump buttons
+  // would strand the user with an empty player — hide them until they pick.
+  btnCarouselClose.style.visibility = hasStarted ? '' : 'hidden';
+  btnCarouselJump.style.visibility = hasStarted ? '' : 'hidden';
 
+  // Show overlay BEFORE building cards. The [hidden] attribute removes the
+  // element from layout, so getComputedStyle / clientWidth return 0 until
+  // we unhide and reflow. Without this, layout math used stale fallbacks
+  // and cells overlapped on desktop.
   carouselEl.hidden = false;
   carouselEl.setAttribute('aria-hidden', 'false');
-  // Force reflow so the open transition runs from the hidden state
   void carouselEl.offsetWidth;
   carouselEl.classList.add('open');
 
-  // Scroll the currently-playing diamond into view (if it's in the grid).
+  buildCarouselCards();
+
   requestAnimationFrame(() => scrollCurrentIntoView('auto'));
 }
 
@@ -519,7 +527,8 @@ function buildCarouselCards() {
   }
   carouselEmpty.hidden = true;
 
-  const currentTrackIdx = order[cursor];
+  // Nothing is "currently playing" yet on a fresh load — suppress the marker.
+  const currentTrackIdx = hasStarted ? order[cursor] : -1;
   carouselIdxs.forEach((trackIdx) => {
     const t = tracks[trackIdx];
     const cell = document.createElement('div');
@@ -549,26 +558,35 @@ function buildCarouselCards() {
   layoutDiamonds();
 }
 
+/** Read --d from the grid's computed style so JS stays in sync with CSS. */
+function getDiamondSize() {
+  const v = getComputedStyle(carouselGrid).getPropertyValue('--d');
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? n : 108;
+}
+
 /**
- * Position cells as a tessellated diamond grid. Each cell's bounding box
- * is D×D and contains an inscribed diamond. Two interlocked rows form a
- * "pair"; odd rows are shifted right by D/2 and down by D/2 so their
- * top/bottom vertices meet the even rows' side vertices.
+ * Position cells as a tessellated diamond grid. STEP (= D + GAP) controls
+ * center-to-center distance, so neighbouring diamonds sit a small gap
+ * apart instead of touching flush. Odd rows shift right by STEP/2 and
+ * down by STEP/2 to interlock with even rows.
  */
 function layoutDiamonds() {
   const cells = carouselGrid.children;
   if (cells.length === 0) return;
 
-  // Pull diamond size from CSS so it stays in sync with responsive breakpoints.
-  const probe = cells[0];
-  const D = probe.offsetWidth || 122;
-  const halfD = D / 2;
+  const D = getDiamondSize();
+  const GAP = 6;          // breathing room between adjacent diamonds (px)
+  const STEP = D + GAP;
+  const HALF_STEP = STEP / 2;
 
-  // How many full diamonds fit horizontally? Even rows span N×D wide; odd
-  // rows start at D/2 and span (N-1)×D + (D/2 + D/2) = N×D too — so both
-  // rows fit in the same width.
-  const stageWidth = carouselStage.clientWidth - 20; // account for padding
-  const cols = Math.max(2, Math.floor(stageWidth / D));
+  // Account for stage's horizontal padding (20px each side, see CSS).
+  const stageWidth = carouselStage.clientWidth - 24;
+
+  // Odd row's rightmost edge sits at (cols-1)*STEP + HALF_STEP + D.
+  // Require that <= stageWidth:
+  //   cols <= (stageWidth - HALF_STEP - D) / STEP + 1
+  const cols = Math.max(2, Math.floor((stageWidth - HALF_STEP - D) / STEP) + 1);
   const pairSize = cols * 2;
 
   let maxRow = 0;
@@ -579,8 +597,8 @@ function layoutDiamonds() {
     const colInRow = isOddRow ? inPair - cols : inPair;
     const rowIdx = pairIdx * 2 + (isOddRow ? 1 : 0);
 
-    const x = colInRow * D + (isOddRow ? halfD : 0);
-    const y = rowIdx * halfD;
+    const x = colInRow * STEP + (isOddRow ? HALF_STEP : 0);
+    const y = rowIdx * HALF_STEP;
 
     cells[i].style.left = x + 'px';
     cells[i].style.top = y + 'px';
@@ -588,16 +606,14 @@ function layoutDiamonds() {
     if (rowIdx > maxRow) maxRow = rowIdx;
   }
 
-  // Container needs to be the bounding box of the laid-out cells.
-  // Width: cols*D for even rows; odd rows extend D/2 further but
-  // we accept that within the stage's padding.
-  const width = cols * D + halfD;  // include odd-row trailing edge
-  const height = maxRow * halfD + D;
+  const width = (cols - 1) * STEP + HALF_STEP + D;
+  const height = maxRow * HALF_STEP + D;
   carouselGrid.style.width = width + 'px';
   carouselGrid.style.height = height + 'px';
 }
 
 function playTrack(trackIdx) {
+  hasStarted = true;
   if (carouselMode === 'liked') {
     enterHeartMode(trackIdx);
   } else {
@@ -617,6 +633,7 @@ function updateCarouselMeta() {
 }
 
 function scrollCurrentIntoView(behavior = 'smooth') {
+  if (!hasStarted) return;
   const currentIdx = order[cursor];
   const target = carouselGrid.querySelector(`.grid-cell[data-track-idx="${currentIdx}"]`);
   if (target) target.scrollIntoView({ block: 'center', behavior });
@@ -645,9 +662,11 @@ function escapeHtml(s) {
 document.addEventListener('keydown', (ev) => {
   if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
 
-  // Picker grid is open: only intercept Escape to close it.
-  // Other keys fall through to main player so playback still works.
+  // Picker grid is open: Escape closes it — but only if the user has
+  // already picked a song at least once. On the initial visit there's
+  // no track loaded, so closing would strand them on a blank player.
   if (carouselEl.classList.contains('open') && ev.key === 'Escape') {
+    if (!hasStarted) return;
     ev.preventDefault();
     closeCarousel();
     return;
@@ -743,19 +762,19 @@ function enableShuffleFromTrack(trackIdx) {
   }
 
   loadLiked();
+  order = tracks.map((_, i) => i);
 
   const hashCursor = cursorFromHash();
   if (hashCursor !== null) {
-    // Deep-link: respect the requested track, no auto-shuffle
-    order = tracks.map((_, i) => i);
+    // Deep link (#t=NN): jump straight into playback, skip the picker.
     cursor = hashCursor;
+    hasStarted = true;
+    await loadTrack(true);
   } else {
-    // First visit / no hash: pick a random track and turn shuffle on
-    const randomIdx = Math.floor(Math.random() * tracks.length);
-    enableShuffleFromTrack(randomIdx);
+    // Fresh visit: open the picker so the user chooses a starting song.
+    // No track is loaded yet — NOW PLAYING marker and the close/jump
+    // buttons stay hidden until they pick one.
+    cursor = 0;
+    openCarousel('all');
   }
-
-  // Try to autoplay. Browsers usually block this until a user gesture —
-  // if blocked, the track is loaded and the user just hits play.
-  await loadTrack(true);
 })();

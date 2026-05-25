@@ -484,16 +484,11 @@ button {
 
 .carousel-grid {
   position: relative;
-  --d: 122px;   /* diamond bounding box size (= rotated square's bbox) */
-  width: 100%;
-  /* JS sets explicit width (px) and min-height once cells are laid out */
+  --d: 108px;   /* diamond bounding box size (rotated square's bbox) */
+  /* JS sets explicit width and height in px once cells are laid out */
 }
-@media (min-width: 600px) {
-  .carousel-grid { --d: 150px; }
-}
-@media (min-width: 900px) {
-  .carousel-grid { --d: 168px; }
-}
+@media (min-width: 600px) { .carousel-grid { --d: 140px; } }
+@media (min-width: 900px) { .carousel-grid { --d: 160px; } }
 
 .grid-cell {
   position: absolute;
