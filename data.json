@@ -87,7 +87,7 @@
       "artist": "HAEMAMUL",
       "file": "07. 해피 루피.mp3",
       "duration": 124.99,
-      "art": "assets/art/07.jpg",
+      "art": "album art/해피루피.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -97,7 +97,7 @@
       "artist": "HAEMAMUL",
       "file": "08. SLEEPY.mp3",
       "duration": 187.63,
-      "art": "assets/art/08.jpg",
+      "art": "album art/SLEEPY.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -107,7 +107,7 @@
       "artist": "HAEMAMUL",
       "file": "09. 해피 루피, 도도 슬리피.mp3",
       "duration": 191.62,
-      "art": "assets/art/09.jpg",
+      "art": "album art/해피루피.png",
       "lyrics": null,
       "lyricsSource": null
     },
