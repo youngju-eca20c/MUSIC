@@ -137,7 +137,7 @@
       "artist": "HAEMAMUL",
       "file": "12. 그래도 나는 여기야.mp3",
       "duration": 153.02,
-      "art": "assets/art/12.jpg",
+      "art": "album art/그래도 나는 여기야.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -158,8 +158,8 @@
       "file": "14. 이상하지.mp3",
       "duration": 224.33,
       "art": "assets/art/14.jpg",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/14.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "15",
