@@ -166,7 +166,7 @@ button {
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  border-radius: 12px;
+  border-radius: 4%;
   overflow: hidden;
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.55),
@@ -180,6 +180,11 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Apply radius on the img itself too — view-transition snapshots
+     capture the img element, not its parent's overflow:hidden clip.
+     Percentage keeps the radius proportional through the morph from
+     a small picker tile to the big player art. */
+  border-radius: 4%;
   opacity: 0;
   transition: opacity 0.4s var(--transition);
 }
@@ -521,7 +526,7 @@ button {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 10px;
+  border-radius: 4%;
   overflow: hidden;
   background: #222;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
@@ -532,6 +537,10 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Match the wrapper radius on the img itself so view-transition
+     snapshots are captured WITH the rounded corners — keeps them
+     consistent throughout the morph to the main player. */
+  border-radius: 4%;
 }
 .grid-cell:hover .grid-art-wrap {
   transform: scale(1.03);
