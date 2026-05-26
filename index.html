@@ -178,7 +178,10 @@
     </div>
   </div>
 
+  <!-- Two audio elements: one for the current track, one staged for the
+       crossfade target. activeIdx in JS picks the live one. -->
   <audio id="audio" preload="metadata"></audio>
+  <audio id="audio-b" preload="metadata"></audio>
 
   <script src="app.js" type="module"></script>
 </body>

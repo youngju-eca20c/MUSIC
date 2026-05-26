@@ -8,7 +8,16 @@
 // ────────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
 
-const audio = $('audio');
+// Two audio elements so we can crossfade between tracks. activeAudioIdx
+// is the live one; the other gets pre-loaded with the new track and
+// faded up while the old one fades down.
+const audios = [$('audio'), $('audio-b')];
+let activeAudioIdx = 0;
+const activeAudio = () => audios[activeAudioIdx];
+const otherAudio = () => audios[1 - activeAudioIdx];
+const CROSSFADE_MS = 900;
+let fadeFrame = null;
+
 const artCard = $('art-card');
 const artImg = $('art-img');
 const lyricsBadge = $('btn-lyrics');
@@ -218,16 +227,67 @@ async function loadTrack(autoplay = false) {
     lyricsText.textContent = '';
   }
 
-  // Audio source
-  audio.src = encodeURI(t.file);
-  audio.load();
-  if (autoplay) {
-    try { await audio.play(); } catch { /* user gesture not yet given */ }
+  // Audio: crossfade when something is already playing, otherwise just
+  // load on the current active element.
+  const old = activeAudio();
+  const wasPlaying = autoplay && !!old.src && !old.paused && old.currentTime > 0;
+  const newUrl = encodeURI(t.file);
+
+  if (wasPlaying) {
+    // Cancel any fade still in flight, then swap to the other element
+    // and start the new track at zero volume so we can ramp it up.
+    if (fadeFrame) { cancelAnimationFrame(fadeFrame); fadeFrame = null; }
+    activeAudioIdx = 1 - activeAudioIdx;
+    const fresh = activeAudio();
+    fresh.src = newUrl;
+    fresh.volume = 0;
+    fresh.load();
+    try {
+      await fresh.play();
+      startCrossfade(old, fresh);
+    } catch {
+      // Play was blocked — revert active and fall back to direct swap.
+      activeAudioIdx = 1 - activeAudioIdx;
+      old.src = newUrl;
+      old.volume = 1;
+      old.load();
+    }
+  } else {
+    old.src = newUrl;
+    old.volume = 1;
+    old.load();
+    if (autoplay) {
+      try { await old.play(); } catch { /* user gesture not yet given */ }
+    }
   }
 
   updateLikeButton();
   updateMediaSession();
   syncURL();
+}
+
+/**
+ * Equal-power crossfade between two <audio> elements. cos/sin curves
+ * keep the perceived loudness flat (instead of the dip you get with a
+ * linear fade where both volumes sit at 0.5 at the midpoint).
+ */
+function startCrossfade(oldA, newA) {
+  if (fadeFrame) cancelAnimationFrame(fadeFrame);
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - start) / CROSSFADE_MS);
+    oldA.volume = Math.cos(t * Math.PI / 2);
+    newA.volume = Math.sin(t * Math.PI / 2);
+    if (t < 1) {
+      fadeFrame = requestAnimationFrame(step);
+    } else {
+      oldA.pause();
+      oldA.currentTime = 0;
+      oldA.volume = 1;  // reset for reuse
+      fadeFrame = null;
+    }
+  }
+  fadeFrame = requestAnimationFrame(step);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -296,9 +356,9 @@ function exitHeartMode() {
   updateHeartIndicator();
 }
 
-function play() { audio.play().catch(() => {}); }
-function pause() { audio.pause(); }
-function togglePlay() { audio.paused ? play() : pause(); }
+function play() { activeAudio().play().catch(() => {}); }
+function pause() { activeAudio().pause(); }
+function togglePlay() { activeAudio().paused ? play() : pause(); }
 
 function next() {
   if (cursor < order.length - 1) {
@@ -316,8 +376,8 @@ function next() {
 
 function prev() {
   // If past 3 seconds, restart current; else go to previous.
-  if (audio.currentTime > 3) {
-    audio.currentTime = 0;
+  if (activeAudio().currentTime > 3) {
+    activeAudio().currentTime = 0;
     return;
   }
   if (cursor > 0) {
@@ -366,34 +426,45 @@ function cycleRepeat() {
 // ────────────────────────────────────────────────────────────────
 //  Audio events
 // ────────────────────────────────────────────────────────────────
-audio.addEventListener('play', () => {
-  btnPlay.classList.add('is-playing');
-  btnPlay.setAttribute('aria-label', '일시정지');
-});
-audio.addEventListener('pause', () => {
-  btnPlay.classList.remove('is-playing');
-  btnPlay.setAttribute('aria-label', '재생');
-});
-audio.addEventListener('timeupdate', () => {
-  if (seekDragging) return;
-  const cur = audio.currentTime;
-  const dur = audio.duration || currentTrack()?.duration || 0;
-  timeCurEl.textContent = fmtTime(cur);
-  const pct = dur ? (cur / dur) * 100 : 0;
-  seekFill.style.width = pct + '%';
-  seekKnob.style.left = pct + '%';
-});
-audio.addEventListener('loadedmetadata', () => {
-  timeDurEl.textContent = fmtTime(audio.duration);
-});
-audio.addEventListener('ended', () => {
-  if (repeat === 'one') {
-    audio.currentTime = 0;
-    play();
-  } else {
-    next();
-  }
-});
+// Wire each audio element to the shared UI. Only events from the
+// currently-active element affect the UI; the other one is either
+// idle or fading out during a crossfade and shouldn't interfere.
+function setupAudioListeners(a) {
+  a.addEventListener('play', () => {
+    if (a !== activeAudio()) return;
+    btnPlay.classList.add('is-playing');
+    btnPlay.setAttribute('aria-label', '일시정지');
+  });
+  a.addEventListener('pause', () => {
+    if (a !== activeAudio()) return;
+    btnPlay.classList.remove('is-playing');
+    btnPlay.setAttribute('aria-label', '재생');
+  });
+  a.addEventListener('timeupdate', () => {
+    if (a !== activeAudio()) return;
+    if (seekDragging) return;
+    const cur = a.currentTime;
+    const dur = a.duration || currentTrack()?.duration || 0;
+    timeCurEl.textContent = fmtTime(cur);
+    const pct = dur ? (cur / dur) * 100 : 0;
+    seekFill.style.width = pct + '%';
+    seekKnob.style.left = pct + '%';
+  });
+  a.addEventListener('loadedmetadata', () => {
+    if (a !== activeAudio()) return;
+    timeDurEl.textContent = fmtTime(a.duration);
+  });
+  a.addEventListener('ended', () => {
+    if (a !== activeAudio()) return;
+    if (repeat === 'one') {
+      a.currentTime = 0;
+      play();
+    } else {
+      next();
+    }
+  });
+}
+audios.forEach(setupAudioListeners);
 
 // ────────────────────────────────────────────────────────────────
 //  Seek bar interaction
@@ -414,17 +485,17 @@ seek.addEventListener('pointerdown', (ev) => {
   seek.classList.add('dragging');
   seek.setPointerCapture(ev.pointerId);
   const pct = seekToEvent(ev);
-  timeCurEl.textContent = fmtTime(pct * (audio.duration || 0));
+  timeCurEl.textContent = fmtTime(pct * (activeAudio().duration || 0));
 });
 seek.addEventListener('pointermove', (ev) => {
   if (!seekDragging) return;
   const pct = seekToEvent(ev);
-  timeCurEl.textContent = fmtTime(pct * (audio.duration || 0));
+  timeCurEl.textContent = fmtTime(pct * (activeAudio().duration || 0));
 });
 seek.addEventListener('pointerup', (ev) => {
   if (!seekDragging) return;
   const pct = seekToEvent(ev);
-  audio.currentTime = pct * (audio.duration || 0);
+  activeAudio().currentTime = pct * (activeAudio().duration || 0);
   seekDragging = false;
   seek.classList.remove('dragging');
 });
@@ -648,11 +719,17 @@ document.addEventListener('keydown', (ev) => {
       ev.preventDefault(); togglePlay(); break;
     case 'ArrowRight':
       if (ev.shiftKey) next();
-      else audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+      else {
+        const a = activeAudio();
+        a.currentTime = Math.min(a.duration, a.currentTime + 5);
+      }
       break;
     case 'ArrowLeft':
       if (ev.shiftKey) prev();
-      else audio.currentTime = Math.max(0, audio.currentTime - 5);
+      else {
+        const a = activeAudio();
+        a.currentTime = Math.max(0, a.currentTime - 5);
+      }
       break;
     case 'n': case 'N': next(); break;
     case 'p': case 'P': prev(); break;
