@@ -428,16 +428,27 @@ button {
    ============================================================ */
 
 /* View Transitions API (Chrome/Edge 111+, Safari 18+) — drives the
-   hero morph from a picker tile to the main player's album art. */
-::view-transition-old(album-art-morph),
+   hero morph from a picker tile to the main player's album art.
+   Tuned to feel like an iOS hero transition: slow, smooth decay
+   easing with no overshoot, and the old snapshot fades out faster
+   than the new one fades in so you never see a ghost double-image. */
+::view-transition-group(album-art-morph) {
+  /* Controls the position + size interpolation of the morphing element */
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+::view-transition-old(album-art-morph) {
+  animation-duration: 0.18s;
+  animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
 ::view-transition-new(album-art-morph) {
-  animation-duration: 0.45s;
-  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.3s;
-  animation-timing-function: ease-out;
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .carousel {
