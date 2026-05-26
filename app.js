@@ -15,7 +15,7 @@ const audios = [$('audio'), $('audio-b')];
 let activeAudioIdx = 0;
 const activeAudio = () => audios[activeAudioIdx];
 const otherAudio = () => audios[1 - activeAudioIdx];
-const CROSSFADE_MS = 500;
+const CROSSFADE_MS = 300;
 let fadeFrame = null;
 
 const artCard = $('art-card');
