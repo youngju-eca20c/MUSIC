@@ -82,38 +82,83 @@ def _normalize_title(s: str) -> str:
     return s.lower()
 
 
+def _longest_shared_substring_len(a: str, b: str, min_len: int = 3) -> int:
+    """Length of the longest substring of `a` that also appears in `b`.
+    Returns 0 if no shared substring of at least min_len characters."""
+    if not a or not b:
+        return 0
+    n = len(a)
+    best = 0
+    for i in range(n):
+        for j in range(i + min_len, n + 1):
+            if a[i:j] in b:
+                if j - i > best:
+                    best = j - i
+            else:
+                # Extending further can't match if shorter prefix doesn't.
+                break
+    return best
+
+
 def find_album_art_override(title: str, title_from_file: str | None,
                              base_title: str | None = None) -> Path | None:
-    """Match an MP3 to a PNG in album art/ by normalised title.
-    Exact match wins; otherwise a substring match (either direction) is enough.
-    base_title lets X.Y tracks fall back to the base X track's title — e.g.
-    '엠퍼러 인 아델리 (Alternative)' won't match 'Emperor in Adelie.png' on its own,
-    but it will if base_title='엠퍼러 인 아델리 (Emperor in Adélie)' is provided."""
+    """Match an MP3 to a PNG in album art/.
+
+    Strategy:
+      1. Exact normalised match against the track's own title wins immediately.
+      2. Otherwise score each PNG by how much of its name overlaps with the
+         track's own title vs the base title (for X.Y variants). Score is
+         weighted so a match against the track's own title beats a match
+         against the base title — so '공백의 궤적Accoustic Version.png' wins
+         over '공백의 궤적.png' for 04.1, and 'Emperor in Adelie Alternative
+         Version.png' wins over 'Emperor in Adelie.png' for 05.1 even though
+         both share the base name.
+    """
     if not ALBUM_ART_DIR.exists():
         return None
-    candidates = [_normalize_title(title)]
-    if title_from_file:
-        candidates.append(_normalize_title(title_from_file))
-    if base_title:
-        candidates.append(_normalize_title(base_title))
-    candidates = [c for c in candidates if c]
+
+    own_norms: list[str] = []
+    for s in (title, title_from_file):
+        if s:
+            n = _normalize_title(s)
+            if n and n not in own_norms:
+                own_norms.append(n)
+    base_norm = _normalize_title(base_title) if base_title else ""
 
     pngs = sorted(ALBUM_ART_DIR.glob("*.png"))
-    # First pass: exact normalized match.
+
+    # 1. Exact match against the track's own title wins immediately.
     for png in pngs:
         norm = _normalize_title(png.stem)
-        if norm and norm in candidates:
+        if norm and norm in own_norms:
             return png
-    # Second pass: substring match — handles abbreviated names like
-    # "떡볶이.png" matching "이번 크리스마스엔 그냥 떡볶이가…".
+
+    # 2. Score the rest. Match against the track's own title is worth 100x
+    #    a match against the base title — so an X.Y-specific PNG always beats
+    #    the base track's PNG when both share the base name. Ties are broken
+    #    by preferring the SHORTER PNG name (more entirely explained by the
+    #    track), so the plain 'Emperor in Adelie.png' wins for 05 over
+    #    'Emperor in Adelie Alternative Version.png' (both match emperorinadelie).
+    best_png = None
+    best_score: tuple[int, int] = (-1, 0)
     for png in pngs:
         norm = _normalize_title(png.stem)
         if not norm:
             continue
-        for cand in candidates:
-            if norm in cand or cand in norm:
-                return png
-    return None
+        own_match = max(
+            (_longest_shared_substring_len(norm, c) for c in own_norms),
+            default=0,
+        )
+        base_match = (
+            _longest_shared_substring_len(norm, base_norm) if base_norm else 0
+        )
+        if own_match == 0 and base_match == 0:
+            continue
+        score = (own_match * 100 + base_match, -len(norm))
+        if score > best_score:
+            best_score = score
+            best_png = png
+    return best_png
 
 
 def extract_lyrics(audio: MP3) -> str | None:

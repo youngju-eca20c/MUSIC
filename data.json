@@ -27,7 +27,7 @@
       "artist": "HAEMAMUL",
       "file": "03. 이번 크리스마스엔 그냥 떡볶이가 먹고싶어.mp3",
       "duration": 156.74,
-      "art": "album art/떡볶이.png",
+      "art": "album art/떡볶이 노래.png",
       "lyrics": null,
       "lyricsSource": null
     },
@@ -47,7 +47,7 @@
       "artist": "HAEMAMUL",
       "file": "04.1 공백의 궤적 Accoustic Ver.mp3",
       "duration": 244.22,
-      "art": "album art/공백의 궤적.png",
+      "art": "album art/공백의 궤적Accoustic Version.png",
       "lyrics": "assets/lyrics/04.1.manual.txt",
       "lyricsSource": "manual"
     },
@@ -67,7 +67,7 @@
       "artist": "HAEMAMUL",
       "file": "05.1 엠퍼러 인 아델리 (Alternative).mp3",
       "duration": 211.1,
-      "art": "album art/Emperor in Adelie.png",
+      "art": "album art/Emperor in Adelie Alternative Version.png",
       "lyrics": null,
       "lyricsSource": null
     },
