@@ -187,6 +187,7 @@ async function loadTrack(autoplay = false) {
   const t = currentTrack();
   if (!t) return;
 
+  // ─── Synchronous UI updates ───
   trackNumEl.textContent = `TRACK ${t.num}`;
   trackTitleEl.textContent = t.title;
   trackArtistEl.textContent = t.artist || 'HAEMAMUL';
@@ -194,8 +195,6 @@ async function loadTrack(autoplay = false) {
   timeCurEl.textContent = '0:00';
   seekFill.style.width = '0%';
   seekKnob.style.left = '0%';
-
-  // Reset flip when changing tracks
   artCard.classList.remove('flipped');
 
   // Album art
@@ -206,11 +205,62 @@ async function loadTrack(autoplay = false) {
     setBackground(encodeURI(t.art));
   }
 
-  // Lyrics badge visibility
+  // Lyrics badge state (sync portion only — the text fetch is at the
+  // bottom of the function where it can safely race).
   if (t.lyrics) {
     lyricsBadge.hidden = false;
     artCard.classList.remove('no-lyrics');
-    // Preload and cache lyrics text
+  } else {
+    lyricsBadge.hidden = true;
+    artCard.classList.add('no-lyrics');
+    lyricsText.textContent = '';
+  }
+
+  // ─── Audio swap (synchronous; MUST happen before any await) ───
+  // Previously the lyrics fetch above was awaited first, which meant
+  // two rapid track-picks would resolve their fetches in unpredictable
+  // order — and whichever fetch resolved LAST ran its audio swap last,
+  // so the audio could end up on the older song while the UI still
+  // showed the newer one. Doing the audio swap synchronously here
+  // guarantees swaps happen in click order.
+  const old = activeAudio();
+  const wasPlaying = autoplay && !!old.src && !old.paused && old.currentTime > 0;
+  const newUrl = encodeURI(t.file);
+
+  if (wasPlaying) {
+    if (fadeFrame) { cancelAnimationFrame(fadeFrame); fadeFrame = null; }
+    activeAudioIdx = 1 - activeAudioIdx;
+    const fresh = activeAudio();
+    fresh.src = newUrl;
+    fresh.volume = 0;
+    fresh.load();
+    // Don't await play() — a pending await here would let a newer
+    // loadTrack call sneak in and end up "behind" us again. Use a
+    // promise chain and bail in the .then() if a newer swap has taken
+    // over since.
+    fresh.play().then(() => {
+      if (activeAudio() !== fresh) return; // newer swap already happened
+      startCrossfade(old, fresh);
+    }).catch(() => {
+      // play() rejected (autoplay block, src changed mid-load, etc).
+      // Don't try to "recover" — if a newer loadTrack happened, it
+      // already set things up correctly. Otherwise the user will hit
+      // the play button to manually start it.
+    });
+  } else {
+    old.src = newUrl;
+    old.volume = 1;
+    old.load();
+    if (autoplay) old.play().catch(() => { /* user gesture not yet given */ });
+  }
+
+  updateLikeButton();
+  updateMediaSession();
+  syncURL();
+
+  // ─── Lyrics text fetch (async; result is guarded so it only
+  // applies if the user is still on this track) ───
+  if (t.lyrics) {
     if (!lyricsCache.has(t.num)) {
       try {
         const res = await fetch(encodeURI(t.lyrics));
@@ -220,50 +270,10 @@ async function loadTrack(autoplay = false) {
         lyricsCache.set(t.num, '가사를 불러올 수 없습니다.');
       }
     }
-    lyricsText.textContent = lyricsCache.get(t.num);
-  } else {
-    lyricsBadge.hidden = true;
-    artCard.classList.add('no-lyrics');
-    lyricsText.textContent = '';
-  }
-
-  // Audio: crossfade when something is already playing, otherwise just
-  // load on the current active element.
-  const old = activeAudio();
-  const wasPlaying = autoplay && !!old.src && !old.paused && old.currentTime > 0;
-  const newUrl = encodeURI(t.file);
-
-  if (wasPlaying) {
-    // Cancel any fade still in flight, then swap to the other element
-    // and start the new track at zero volume so we can ramp it up.
-    if (fadeFrame) { cancelAnimationFrame(fadeFrame); fadeFrame = null; }
-    activeAudioIdx = 1 - activeAudioIdx;
-    const fresh = activeAudio();
-    fresh.src = newUrl;
-    fresh.volume = 0;
-    fresh.load();
-    try {
-      await fresh.play();
-      startCrossfade(old, fresh);
-    } catch {
-      // Play was blocked — revert active and fall back to direct swap.
-      activeAudioIdx = 1 - activeAudioIdx;
-      old.src = newUrl;
-      old.volume = 1;
-      old.load();
-    }
-  } else {
-    old.src = newUrl;
-    old.volume = 1;
-    old.load();
-    if (autoplay) {
-      try { await old.play(); } catch { /* user gesture not yet given */ }
+    if (currentTrack()?.num === t.num) {
+      lyricsText.textContent = lyricsCache.get(t.num);
     }
   }
-
-  updateLikeButton();
-  updateMediaSession();
-  syncURL();
 }
 
 /**

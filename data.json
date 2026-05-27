@@ -113,11 +113,11 @@
     },
     {
       "num": "10",
-      "title": "Crazy zombie",
+      "title": "무대 위의 좀비",
       "artist": "HAEMAMUL",
-      "file": "10. Crazy zombie.mp3",
+      "file": "10. 무대 위의 좀비.mp3",
       "duration": 214.56,
-      "art": "assets/art/10.jpg",
+      "art": "album art/무대위의 좀비.png",
       "lyrics": null,
       "lyricsSource": null
     },
