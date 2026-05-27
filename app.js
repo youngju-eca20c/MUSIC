@@ -217,19 +217,20 @@ async function loadTrack(autoplay = false) {
   }
 
   // ─── Audio swap (synchronous; MUST happen before any await) ───
-  // Previously the lyrics fetch above was awaited first, which meant
-  // two rapid track-picks would resolve their fetches in unpredictable
-  // order — and whichever fetch resolved LAST ran its audio swap last,
-  // so the audio could end up on the older song while the UI still
-  // showed the newer one. Doing the audio swap synchronously here
-  // guarantees swaps happen in click order.
-  const old = activeAudio();
-  const wasPlaying = autoplay && !!old.src && !old.paused && old.currentTime > 0;
+  // The "audible" element isn't necessarily activeAudio() — when the
+  // user spam-clicks tracks, the previous click may have already
+  // bumped activeAudioIdx to a slot whose play() is still pending,
+  // while the actual sound is still coming out of the OTHER slot.
+  // We need to fade out whichever slot is producing sound right now,
+  // regardless of which one the index points at.
   const newUrl = encodeURI(t.file);
+  const audible = audios.find(a => !a.paused && !!a.src && a.currentTime > 0);
 
-  if (wasPlaying) {
+  if (autoplay && audible) {
     if (fadeFrame) { cancelAnimationFrame(fadeFrame); fadeFrame = null; }
-    activeAudioIdx = 1 - activeAudioIdx;
+    // Fresh slot is the one that is NOT currently producing sound.
+    const freshIdx = audios.indexOf(audible) === 0 ? 1 : 0;
+    activeAudioIdx = freshIdx;
     const fresh = activeAudio();
     fresh.src = newUrl;
     fresh.volume = 0;
@@ -240,18 +241,19 @@ async function loadTrack(autoplay = false) {
     // over since.
     fresh.play().then(() => {
       if (activeAudio() !== fresh) return; // newer swap already happened
-      startCrossfade(old, fresh);
+      startCrossfade(audible, fresh);
     }).catch(() => {
       // play() rejected (autoplay block, src changed mid-load, etc).
-      // Don't try to "recover" — if a newer loadTrack happened, it
-      // already set things up correctly. Otherwise the user will hit
-      // the play button to manually start it.
+      // Pause the audible audio anyway so it doesn't keep playing — we
+      // already told the UI we've moved on.
+      try { audible.pause(); } catch {}
     });
   } else {
-    old.src = newUrl;
-    old.volume = 1;
-    old.load();
-    if (autoplay) old.play().catch(() => { /* user gesture not yet given */ });
+    const a = activeAudio();
+    a.src = newUrl;
+    a.volume = 1;
+    a.load();
+    if (autoplay) a.play().catch(() => { /* user gesture not yet given */ });
   }
 
   updateLikeButton();
