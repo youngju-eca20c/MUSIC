@@ -82,14 +82,20 @@ def _normalize_title(s: str) -> str:
     return s.lower()
 
 
-def find_album_art_override(title: str, title_from_file: str | None) -> Path | None:
+def find_album_art_override(title: str, title_from_file: str | None,
+                             base_title: str | None = None) -> Path | None:
     """Match an MP3 to a PNG in album art/ by normalised title.
-    Exact match wins; otherwise a substring match (either direction) is enough."""
+    Exact match wins; otherwise a substring match (either direction) is enough.
+    base_title lets X.Y tracks fall back to the base X track's title — e.g.
+    '엠퍼러 인 아델리 (Alternative)' won't match 'Emperor in Adelie.png' on its own,
+    but it will if base_title='엠퍼러 인 아델리 (Emperor in Adélie)' is provided."""
     if not ALBUM_ART_DIR.exists():
         return None
     candidates = [_normalize_title(title)]
     if title_from_file:
         candidates.append(_normalize_title(title_from_file))
+    if base_title:
+        candidates.append(_normalize_title(base_title))
     candidates = [c for c in candidates if c]
 
     pngs = sorted(ALBUM_ART_DIR.glob("*.png"))
@@ -146,11 +152,24 @@ def main() -> None:
         return
 
     # Pre-pass: figure out which track numbers exist now, drop orphan assets.
+    # Also collect base track titles so X.Y variants can fall back to the
+    # base X track's title when matching album art.
     current_nums: set[str] = set()
+    base_titles: dict[str, str] = {}
     for mp3 in mp3_files:
         m = TRACK_RE.match(mp3.name)
-        if m:
-            current_nums.add(slug(m.group(1)))
+        if not m:
+            continue
+        num = slug(m.group(1))
+        current_nums.add(num)
+        if "." not in num:
+            try:
+                audio = MP3(mp3)
+                tags = audio.tags
+                title = str(tags.get("TIT2", m.group(2).strip())).strip() if tags else m.group(2).strip()
+                base_titles[num] = TITLE_PREFIX_RE.sub("", title)
+            except Exception:
+                base_titles[num] = m.group(2).strip()
     cleanup_orphans(current_nums)
 
     tracks: list[dict] = []
@@ -171,9 +190,14 @@ def main() -> None:
 
         # Album art priority:
         #   1. PNG in album art/ folder whose name matches the track title.
-        #   2. Otherwise re-extract APIC from the MP3 into assets/art/NN.jpg.
+        #   2. For X.Y variants, the base X track's PNG (so '엠퍼러 인 아델리
+        #      (Alternative)' inherits 'Emperor in Adelie.png' from 05).
+        #   3. Otherwise re-extract APIC from the MP3 into assets/art/NN.jpg.
         remove_existing_art(track_num)
-        override = find_album_art_override(title, title_from_file)
+        base_title = None
+        if "." in track_num:
+            base_title = base_titles.get(track_num.split(".")[0])
+        override = find_album_art_override(title, title_from_file, base_title)
         if override:
             art_rel = f"album art/{override.name}"
             art_source = "override"
