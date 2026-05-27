@@ -266,6 +266,8 @@ button {
   font-weight: 700;
   line-height: 1.25;
   word-break: keep-all;
+  /* Honor explicit \n in titles (e.g. version markers on a new line) */
+  white-space: pre-line;
 }
 
 .track-artist {
@@ -602,6 +604,8 @@ button {
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: keep-all;
+  /* Honor explicit \n so version markers wrap to a second line */
+  white-space: pre-line;
 }
 .grid-cell.is-current .grid-label {
   color: var(--fg);
