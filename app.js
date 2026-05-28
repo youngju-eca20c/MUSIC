@@ -642,14 +642,6 @@ function buildCarouselCards() {
 
 
 function playTrack(trackIdx) {
-  // Tapping the currently-playing track shouldn't restart it from 0 —
-  // just close the picker, same as hitting the × button. Playback
-  // continues from wherever it was.
-  if (hasStarted && order[cursor] === trackIdx) {
-    closeCarousel();
-    return;
-  }
-
   hasStarted = true;
   if (carouselMode === 'liked') {
     enterHeartMode(trackIdx);
