@@ -224,10 +224,17 @@ async function loadTrack(autoplay = false) {
   // We need to fade out whichever slot is producing sound right now,
   // regardless of which one the index points at.
   const newUrl = encodeURI(t.file);
+
+  // Kill any in-flight fade up front, regardless of which branch we
+  // take below — otherwise a residual animation can keep stepping
+  // volume to sin(small) ≈ 0 right after we just set volume = 1 in
+  // the no-audible path, which sounds like "the new song silently
+  // started".
+  if (fadeFrame) { cancelAnimationFrame(fadeFrame); fadeFrame = null; }
+
   const audible = audios.find(a => !a.paused && !!a.src && a.currentTime > 0);
 
   if (autoplay && audible) {
-    if (fadeFrame) { cancelAnimationFrame(fadeFrame); fadeFrame = null; }
     // Fresh slot is the one that is NOT currently producing sound.
     const freshIdx = audios.indexOf(audible) === 0 ? 1 : 0;
     activeAudioIdx = freshIdx;
@@ -248,13 +255,13 @@ async function loadTrack(autoplay = false) {
     fresh.volume = 0;
     fresh.load();
     startFadeIn(fresh);
-    fresh.play().catch(() => {});
+    safePlay(fresh);
   } else {
     const a = activeAudio();
     a.src = newUrl;
     a.volume = 1;
     a.load();
-    if (autoplay) a.play().catch(() => { /* user gesture not yet given */ });
+    if (autoplay) safePlay(a);
   }
 
   updateLikeButton();
@@ -298,6 +305,27 @@ function startFadeIn(audio) {
     }
   }
   fadeFrame = requestAnimationFrame(step);
+}
+
+/**
+ * Kick off playback, and if the browser rejects the initial play()
+ * (Android Chrome routinely AbortErrors a play() called immediately
+ * after load() while the buffer's still arriving), wait for the
+ * element's next 'canplay' and try once more. The retry is guarded
+ * so a newer track-switch that's already changed src/started
+ * playback isn't disturbed.
+ */
+function safePlay(audio) {
+  const p = audio.play();
+  if (!p || typeof p.catch !== 'function') return;
+  p.catch(() => {
+    const srcAtCatch = audio.src;
+    audio.addEventListener('canplay', () => {
+      if (audio.src === srcAtCatch && audio.paused) {
+        audio.play().catch(() => {});
+      }
+    }, { once: true });
+  });
 }
 
 // ────────────────────────────────────────────────────────────────
