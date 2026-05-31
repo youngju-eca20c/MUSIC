@@ -232,22 +232,23 @@ async function loadTrack(autoplay = false) {
     const freshIdx = audios.indexOf(audible) === 0 ? 1 : 0;
     activeAudioIdx = freshIdx;
     const fresh = activeAudio();
+
+    // Cut the old slot synchronously — no fade-out, no waiting on a
+    // play() promise that might be aborted by a newer transition.
+    try { audible.pause(); } catch {}
+    audible.currentTime = 0;
+    audible.volume = 1;
+
+    // Load and fade-in the new slot synchronously. The animation is
+    // tied to the swap, not to play()'s promise, so even if play() is
+    // rejected mid-load (AbortError on rapid clicks) or a newer swap
+    // takes over, the volume curve still completes correctly on
+    // whatever winds up loaded in this slot.
     fresh.src = newUrl;
     fresh.volume = 0;
     fresh.load();
-    // Don't await play() — a pending await here would let a newer
-    // loadTrack call sneak in and end up "behind" us again. Use a
-    // promise chain and bail in the .then() if a newer swap has taken
-    // over since.
-    fresh.play().then(() => {
-      if (activeAudio() !== fresh) return; // newer swap already happened
-      startCrossfade(audible, fresh);
-    }).catch(() => {
-      // play() rejected (autoplay block, src changed mid-load, etc).
-      // Pause the audible audio anyway so it doesn't keep playing — we
-      // already told the UI we've moved on.
-      try { audible.pause(); } catch {}
-    });
+    startFadeIn(fresh);
+    fresh.play().catch(() => {});
   } else {
     const a = activeAudio();
     a.src = newUrl;
@@ -279,24 +280,17 @@ async function loadTrack(autoplay = false) {
 }
 
 /**
- * Hard-cut the old track and fade the new one in. We used to crossfade
- * both at once with cos/sin curves, but the fade-out side was the
- * source of every transition glitch (interrupted fades leaving the old
- * audio playing, pauses landing on the wrong element after a swap…).
- * Stopping the old slot synchronously makes those impossible. The new
- * track still gets a 300ms sin-curve fade-in so the start isn't abrupt.
+ * Fade `audio` in over CROSSFADE_MS using a sin-curve (equal-power).
+ * Pausing the previously-audible slot is the caller's job — done at
+ * swap time, synchronously, so we never depend on a play() promise
+ * actually resolving to clean things up.
  */
-function startCrossfade(oldA, newA) {
+function startFadeIn(audio) {
   if (fadeFrame) cancelAnimationFrame(fadeFrame);
-  // Cut the old slot now, no fade.
-  try { oldA.pause(); } catch {}
-  oldA.currentTime = 0;
-  oldA.volume = 1;
-  // Fade the new one in.
   const start = performance.now();
   function step(now) {
     const t = Math.min(1, (now - start) / CROSSFADE_MS);
-    newA.volume = Math.sin(t * Math.PI / 2);
+    audio.volume = Math.sin(t * Math.PI / 2);
     if (t < 1) {
       fadeFrame = requestAnimationFrame(step);
     } else {
