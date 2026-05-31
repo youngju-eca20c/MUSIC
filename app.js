@@ -279,23 +279,27 @@ async function loadTrack(autoplay = false) {
 }
 
 /**
- * Equal-power crossfade between two <audio> elements. cos/sin curves
- * keep the perceived loudness flat (instead of the dip you get with a
- * linear fade where both volumes sit at 0.5 at the midpoint).
+ * Hard-cut the old track and fade the new one in. We used to crossfade
+ * both at once with cos/sin curves, but the fade-out side was the
+ * source of every transition glitch (interrupted fades leaving the old
+ * audio playing, pauses landing on the wrong element after a swap…).
+ * Stopping the old slot synchronously makes those impossible. The new
+ * track still gets a 300ms sin-curve fade-in so the start isn't abrupt.
  */
 function startCrossfade(oldA, newA) {
   if (fadeFrame) cancelAnimationFrame(fadeFrame);
+  // Cut the old slot now, no fade.
+  try { oldA.pause(); } catch {}
+  oldA.currentTime = 0;
+  oldA.volume = 1;
+  // Fade the new one in.
   const start = performance.now();
   function step(now) {
     const t = Math.min(1, (now - start) / CROSSFADE_MS);
-    oldA.volume = Math.cos(t * Math.PI / 2);
     newA.volume = Math.sin(t * Math.PI / 2);
     if (t < 1) {
       fadeFrame = requestAnimationFrame(step);
     } else {
-      oldA.pause();
-      oldA.currentTime = 0;
-      oldA.volume = 1;  // reset for reuse
       fadeFrame = null;
     }
   }
