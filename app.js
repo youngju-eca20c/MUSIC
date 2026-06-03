@@ -601,10 +601,9 @@ function openCarousel(mode = 'all') {
 
   carouselModeEl.textContent = mode === 'liked' ? '좋아하는 곡' : '전체 곡';
 
-  // On the first visit (no track started yet) the close/jump buttons
-  // would strand the user with an empty player — hide them until they pick.
+  // On the first visit (no track started yet) the close button would
+  // strand the user with an empty player — hide it until they pick.
   btnCarouselClose.style.visibility = hasStarted ? '' : 'hidden';
-  btnCarouselJump.style.visibility = hasStarted ? '' : 'hidden';
 
   // Show overlay BEFORE building cards. The [hidden] attribute removes the
   // element from layout, so getComputedStyle / clientWidth return 0 until
