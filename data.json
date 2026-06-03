@@ -1,10 +1,10 @@
 {
-  "artist": "HAEMAMUL",
+  "artist": "해마는 물고기",
   "tracks": [
     {
       "num": "01",
       "title": "RED LINE",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "01. RED LINE.mp3",
       "duration": 181.27,
       "art": "album art/Red LIne.png",
@@ -14,7 +14,7 @@
     {
       "num": "02",
       "title": "LET ME BREATHE",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "02. LET ME BREATHE.mp3",
       "duration": 182.23,
       "art": "album art/let me breathe.png",
@@ -24,7 +24,7 @@
     {
       "num": "03",
       "title": "이번 크리스마스엔 그냥 떡볶이가 먹고 싶어",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "03. 이번 크리스마스엔 그냥 떡볶이가 먹고싶어.mp3",
       "duration": 156.74,
       "art": "album art/떡볶이 노래.png",
@@ -34,7 +34,7 @@
     {
       "num": "04",
       "title": "공백의 궤적",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "04. 공백의 궤적.mp3",
       "duration": 206.35,
       "art": "album art/공백의 궤적.png",
@@ -44,7 +44,7 @@
     {
       "num": "04.1",
       "title": "공백의 궤적\n(Accoustic Version)",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "04.1 공백의 궤적 (Accoustic Version).mp3",
       "duration": 244.22,
       "art": "album art/공백의 궤적Accoustic Version.png",
@@ -54,7 +54,7 @@
     {
       "num": "05",
       "title": "TONG TONG VIBE",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "05. TONG TONG VIBE.mp3",
       "duration": 135.02,
       "art": "album art/Tong Tong Vibe.png",
@@ -64,7 +64,7 @@
     {
       "num": "06",
       "title": "엠퍼러 인 아델리 (Emperor in Adélie)",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "06. 엠퍼러 인 아델리 (Emperor in Adélie).mp3",
       "duration": 184.99,
       "art": "album art/Emperor in Adelie.png",
@@ -74,7 +74,7 @@
     {
       "num": "06.1",
       "title": "엠퍼러 인 아델리 (Alternative Version)",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "06.1 엠퍼러 인 아델리 (Alternative Version).mp3",
       "duration": 211.1,
       "art": "album art/Emperor in Adelie Alternative Version.png",
@@ -84,7 +84,7 @@
     {
       "num": "07",
       "title": "무대 위의 좀비",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "07. 무대 위의 좀비.mp3",
       "duration": 214.56,
       "art": "album art/무대위의 좀비.png",
@@ -94,7 +94,7 @@
     {
       "num": "08",
       "title": "해피 루피",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "08. 해피 루피.mp3",
       "duration": 124.99,
       "art": "album art/해피루피.png",
@@ -104,7 +104,7 @@
     {
       "num": "09",
       "title": "SLEEPY",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "09. SLEEPY.mp3",
       "duration": 187.63,
       "art": "album art/SLEEPY.png",
@@ -114,7 +114,7 @@
     {
       "num": "10",
       "title": "해피 루피, 도도 슬리피",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "10. 해피 루피, 도도 슬리피.mp3",
       "duration": 191.62,
       "art": "album art/해피루피 도도 슬리피.png",
@@ -124,7 +124,7 @@
     {
       "num": "11",
       "title": "TAKE ME BACK",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "11. TAKE ME BACK.mp3",
       "duration": 226.63,
       "art": "album art/TAKE ME BACK.png",
@@ -134,7 +134,7 @@
     {
       "num": "12",
       "title": "그래도 나는 여기야",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "12. 그래도 나는 여기야.mp3",
       "duration": 153.02,
       "art": "album art/그래도 나는 여기야.png",
@@ -144,7 +144,7 @@
     {
       "num": "13",
       "title": "Amazon Drip",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "13. Amazon Drip.mp3",
       "duration": 237.74,
       "art": "album art/amazon drip.png",
@@ -154,7 +154,7 @@
     {
       "num": "14",
       "title": "이상하지",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "14. 이상하지.mp3",
       "duration": 224.33,
       "art": "album art/이상하지.png",
@@ -164,7 +164,7 @@
     {
       "num": "15",
       "title": "나는 바다의 파리",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "15. 나는 바다의 파리.mp3",
       "duration": 152.04,
       "art": "album art/나는 바다의 파리.png",
@@ -174,7 +174,7 @@
     {
       "num": "16",
       "title": "나는 당신의 무엇인가요",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "16. 나는 당신의 무엇인가요.mp3",
       "duration": 198.02,
       "art": "album art/나는 당신의 무엇인가요.png",
@@ -184,7 +184,7 @@
     {
       "num": "17",
       "title": "AI는 연애상담을 하지 않아",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "17. AI는 연애상담을 하지 않아.mp3",
       "duration": 226.8,
       "art": "album art/ai는 연애상담을 하지 않아.png",
@@ -194,7 +194,7 @@
     {
       "num": "18",
       "title": "내일의 나는",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "18. 내일의 나는.mp3",
       "duration": 253.03,
       "art": "album art/내일의 나는.png",
@@ -204,7 +204,7 @@
     {
       "num": "19",
       "title": "세계멸망 전야제",
-      "artist": "HAEMAMUL",
+      "artist": "해마는 물고기",
       "file": "19. 세계멸망 전야제.mp3",
       "duration": 247.58,
       "art": "album art/세계멸망 전야제.png",

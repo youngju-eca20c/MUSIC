@@ -302,7 +302,7 @@ def main() -> None:
             t["art"] = last_art
 
     data = {
-        "artist": "HAEMAMUL",
+        "artist": "해마는 물고기",
         "tracks": tracks,
     }
     (ROOT / "data.json").write_text(

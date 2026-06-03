@@ -1,6 +1,6 @@
-# HAEMAMUL
+# 해마는 물고기
 
-Personal music showcase web app by HAEMAMUL.
+Personal music showcase web app by 해마는 물고기.
 
 Live: https://youngju-eca20c.github.io/MUSIC/
 

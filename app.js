@@ -1,4 +1,4 @@
-// HAEMAMUL — Music Web App
+// 해마는 물고기 — Music Web App
 // Vanilla JS audio player with shuffle/repeat, color-extracted background,
 // album-art-to-lyrics flip, Coverflow-style track carousel, likes + heart
 // playlist mode, keyboard shortcuts, MediaSession.
@@ -201,7 +201,7 @@ async function loadTrack(autoplay = false) {
   // ─── Synchronous UI updates ───
   trackNumEl.textContent = `TRACK ${t.num}`;
   trackTitleEl.textContent = t.title;
-  trackArtistEl.textContent = t.artist || 'HAEMAMUL';
+  trackArtistEl.textContent = t.artist || '해마는 물고기';
   timeDurEl.textContent = fmtTime(t.duration);
   timeCurEl.textContent = '0:00';
   seekFill.style.width = '0%';
@@ -760,7 +760,7 @@ async function shareLink() {
   const url = shareUrl();
   if (navigator.share) {
     try {
-      await navigator.share({ title: 'HAEMAMUL', url });
+      await navigator.share({ title: '해마는 물고기', url });
       closeShareModal();
       return;
     } catch {
@@ -873,8 +873,8 @@ function updateMediaSession() {
   if (!t) return;
   navigator.mediaSession.metadata = new MediaMetadata({
     title: t.title,
-    artist: t.artist || 'HAEMAMUL',
-    album: 'HAEMAMUL',
+    artist: t.artist || '해마는 물고기',
+    album: '해마는 물고기',
     artwork: t.art ? [
       { src: encodeURI(t.art), sizes: '512x512', type: 'image/jpeg' }
     ] : []
