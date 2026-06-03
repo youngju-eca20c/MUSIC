@@ -52,7 +52,6 @@ const carouselGrid = $('carousel-grid');
 const carouselEmpty = $('carousel-empty');
 const carouselModeEl = $('carousel-mode');
 const btnCarouselClose = $('btn-carousel-close');
-const btnCarouselJump = $('btn-carousel-jump');
 const btnCarouselShare = $('btn-carousel-share');
 
 // Share modal
@@ -730,16 +729,11 @@ function scrollCurrentIntoView(behavior = 'smooth') {
   if (target) target.scrollIntoView({ block: 'center', behavior });
 }
 
-function jumpToCurrent() {
-  scrollCurrentIntoView('smooth');
-}
-
 // Wire picker handlers
 btnTracklist.addEventListener('click', () => openCarousel('all'));
 btnHeartList.addEventListener('click', () => openCarousel('liked'));
 btnLike.addEventListener('click', toggleLike);
 btnCarouselClose.addEventListener('click', closeCarousel);
-btnCarouselJump.addEventListener('click', jumpToCurrent);
 btnCarouselShare.addEventListener('click', openShareModal);
 
 // Share modal handlers
