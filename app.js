@@ -43,7 +43,6 @@ const btnRepeat = $('btn-repeat');
 const btnTracklist = $('btn-tracklist');
 const btnLike = $('btn-like');
 const btnHeartList = $('btn-heart-list');
-const brandHeart = $('brand-heart');
 
 // Track picker (tessellated diamond grid)
 const carouselEl = $('carousel');
@@ -372,10 +371,6 @@ function updateLikeButton() {
   btnLike.setAttribute('title', isLiked ? '좋아요 해제' : '좋아요');
 }
 
-function updateHeartIndicator() {
-  brandHeart.hidden = !heartMode;
-}
-
 function enterHeartMode(startIdx) {
   const likedIdxs = tracks.map((t, i) => liked.has(t.num) ? i : -1).filter(i => i >= 0);
   if (likedIdxs.length === 0) return false;
@@ -387,7 +382,6 @@ function enterHeartMode(startIdx) {
     order = likedIdxs;
   }
   cursor = Math.max(0, order.indexOf(startIdx));
-  updateHeartIndicator();
   return true;
 }
 
@@ -402,7 +396,6 @@ function exitHeartMode() {
     order = tracks.map((_, i) => i);
   }
   cursor = Math.max(0, order.indexOf(currentIdx));
-  updateHeartIndicator();
 }
 
 function play() { activeAudio().play().catch(() => {}); }
