@@ -568,12 +568,19 @@ button {
   padding: 6px 0 4px;
 }
 .share-qr[hidden] { display: none; }
-.share-qr img {
+.share-qr-canvas {
   width: 220px;
   height: 220px;
   border-radius: 10px;
   background: #fff;
   padding: 10px;
+  display: grid;
+  place-items: center;
+}
+.share-qr-canvas svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .share-qr p {
   font-size: 12px;

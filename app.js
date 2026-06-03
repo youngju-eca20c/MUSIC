@@ -59,7 +59,7 @@ const shareModal = $('share-modal');
 const shareBackdrop = $('share-backdrop');
 const shareOptionsEl = $('share-options');
 const shareQrEl = $('share-qr');
-const shareQrImg = $('share-qr-img');
+const shareQrCanvasEl = $('share-qr-canvas');
 const shareToastEl = $('share-toast');
 const btnShareLink = $('btn-share-link');
 const btnShareQr = $('btn-share-qr');
@@ -786,10 +786,20 @@ async function shareLink() {
 
 function showQrCode() {
   const url = shareUrl();
-  // Use the qrserver.com public API — no client-side dep needed.
-  shareQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=${encodeURIComponent(url)}`;
   shareOptionsEl.hidden = true;
   shareQrEl.hidden = false;
+  // Generate the QR locally via the vendored qrcode-generator library
+  // (window.qrcode). No third-party requests = ad-blockers can't break
+  // this. typeNumber=0 lets the lib auto-pick a size that fits the URL.
+  try {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    shareQrCanvasEl.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 0 });
+  } catch (err) {
+    shareQrCanvasEl.textContent = 'QR 생성 실패';
+    console.error(err);
+  }
 }
 
 function escapeHtml(s) {
