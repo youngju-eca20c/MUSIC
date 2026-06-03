@@ -382,6 +382,7 @@ function enterHeartMode(startIdx) {
     order = likedIdxs;
   }
   cursor = Math.max(0, order.indexOf(startIdx));
+  updateHeartListBtn();
   return true;
 }
 
@@ -396,6 +397,12 @@ function exitHeartMode() {
     order = tracks.map((_, i) => i);
   }
   cursor = Math.max(0, order.indexOf(currentIdx));
+  updateHeartListBtn();
+}
+
+/** Light up the ♥☰ button red whenever we're cycling within the liked list. */
+function updateHeartListBtn() {
+  btnHeartList.classList.toggle('active', heartMode);
 }
 
 function play() { activeAudio().play().catch(() => {}); }
@@ -679,6 +686,14 @@ function playTrack(trackIdx) {
     const pos = order.indexOf(trackIdx);
     cursor = pos >= 0 ? pos : 0;
   }
+
+  // Defensive: clear any stale view-transition-name on the destination
+  // before we set one on the source. When the user picks tracks quickly
+  // the previous transition can still be running (or aborted), and its
+  // .finally cleanup may not have run yet — leaving artImg's name set.
+  // If both source and destination carry the same name at startViewTransition
+  // time, the spec aborts the new transition and the click silently fails.
+  artImg.style.viewTransitionName = '';
 
   // Hero-style morph: the tapped tile's album art grows into the main
   // player's album art. Uses the View Transitions API where available

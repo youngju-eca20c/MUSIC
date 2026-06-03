@@ -338,6 +338,11 @@ button {
 #btn-like.liked:hover { color: #ff4d6d; }
 #btn-like.liked svg { fill: #ff4d6d; }
 
+/* Heart-list button lights up red while we're cycling within the liked
+   playlist — same accent as the ♥ like button so the connection's clear. */
+#btn-heart-list.active,
+#btn-heart-list.active:hover { color: #ff4d6d; }
+
 /* Tighten secondary row spacing on narrow screens to match controls */
 @media (max-width: 420px) {
   .secondary-controls { padding: 0 4px; }
