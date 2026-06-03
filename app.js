@@ -53,6 +53,18 @@ const carouselEmpty = $('carousel-empty');
 const carouselModeEl = $('carousel-mode');
 const btnCarouselClose = $('btn-carousel-close');
 const btnCarouselJump = $('btn-carousel-jump');
+const btnCarouselShare = $('btn-carousel-share');
+
+// Share modal
+const shareModal = $('share-modal');
+const shareBackdrop = $('share-backdrop');
+const shareOptionsEl = $('share-options');
+const shareQrEl = $('share-qr');
+const shareQrImg = $('share-qr-img');
+const shareToastEl = $('share-toast');
+const btnShareLink = $('btn-share-link');
+const btnShareQr = $('btn-share-qr');
+const btnShareClose = $('share-close');
 
 const bgA = $('bg-a');
 const bgB = $('bg-b');
@@ -728,6 +740,63 @@ btnHeartList.addEventListener('click', () => openCarousel('liked'));
 btnLike.addEventListener('click', toggleLike);
 btnCarouselClose.addEventListener('click', closeCarousel);
 btnCarouselJump.addEventListener('click', jumpToCurrent);
+btnCarouselShare.addEventListener('click', openShareModal);
+
+// Share modal handlers
+btnShareLink.addEventListener('click', shareLink);
+btnShareQr.addEventListener('click', showQrCode);
+btnShareClose.addEventListener('click', closeShareModal);
+shareBackdrop.addEventListener('click', closeShareModal);
+
+function shareUrl() {
+  return location.href.split('#')[0];
+}
+
+function openShareModal() {
+  shareOptionsEl.hidden = false;
+  shareQrEl.hidden = true;
+  shareToastEl.hidden = true;
+  shareModal.hidden = false;
+}
+
+function closeShareModal() {
+  shareModal.hidden = true;
+}
+
+async function shareLink() {
+  const url = shareUrl();
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'HAEMAMUL', url });
+      closeShareModal();
+      return;
+    } catch {
+      // user cancelled or error — fall through to clipboard fallback
+    }
+  }
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(url);
+      shareOptionsEl.hidden = true;
+      shareToastEl.textContent = '링크가 복사됐어요';
+      shareToastEl.hidden = false;
+      setTimeout(closeShareModal, 1400);
+      return;
+    } catch {}
+  }
+  // Last-ditch fallback: show the URL so the user can copy manually
+  shareOptionsEl.hidden = true;
+  shareToastEl.textContent = url;
+  shareToastEl.hidden = false;
+}
+
+function showQrCode() {
+  const url = shareUrl();
+  // Use the qrserver.com public API — no client-side dep needed.
+  shareQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=${encodeURIComponent(url)}`;
+  shareOptionsEl.hidden = true;
+  shareQrEl.hidden = false;
+}
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({
@@ -740,6 +809,14 @@ function escapeHtml(s) {
 // ────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', (ev) => {
   if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
+
+  // Share modal eats Escape first so it can dismiss without closing
+  // the picker behind it.
+  if (!shareModal.hidden && ev.key === 'Escape') {
+    ev.preventDefault();
+    closeShareModal();
+    return;
+  }
 
   // Picker grid is open: Escape closes it — but only if the user has
   // already picked a song at least once. On the initial visit there's

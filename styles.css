@@ -483,11 +483,134 @@ button {
   height: 64px;
   padding: 0 12px;
   display: grid;
-  grid-template-columns: 48px 1fr 48px;
+  grid-template-columns: 48px 38px 1fr 48px;
   align-items: center;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* Smaller, slightly dimmed button for the share icon — kept subtle */
+.carousel-top .icon-btn-sm {
+  width: 38px;
+  height: 38px;
+  color: var(--fg-dim);
+}
+.carousel-top .icon-btn-sm:hover { color: var(--fg); }
+
+/* ============================================================
+   Share modal — link copy / QR code
+   ============================================================ */
+
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+}
+.share-modal[hidden] { display: none; }
+
+.share-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.share-card {
+  position: relative;
+  background: rgba(22, 22, 26, 0.96);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 22px 22px 16px;
+  min-width: 280px;
+  max-width: 88vw;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: share-rise 0.25s var(--transition);
+}
+@keyframes share-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.share-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 18px;
+  letter-spacing: 0.01em;
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.share-options[hidden] { display: none; }
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s var(--transition), transform 0.1s var(--transition);
+}
+.share-option:hover { background: rgba(255, 255, 255, 0.12); }
+.share-option:active { transform: scale(0.96); }
+
+.share-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 0 4px;
+}
+.share-qr[hidden] { display: none; }
+.share-qr img {
+  width: 220px;
+  height: 220px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+.share-qr p {
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+
+.share-toast {
+  margin-top: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--fg);
+}
+.share-toast[hidden] { display: none; }
+
+.share-close {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s var(--transition), color 0.15s var(--transition);
+}
+.share-close:hover { background: rgba(255, 255, 255, 0.06); color: var(--fg); }
 .carousel-mode {
   text-align: center;
   font-size: 13px;
