@@ -480,13 +480,23 @@ button {
 .carousel[hidden] { display: none; }
 
 .carousel-top {
+  position: relative;
   height: 64px;
   padding: 0 12px;
-  display: grid;
-  grid-template-columns: 48px 38px 1fr 48px;
+  display: flex;
   align-items: center;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+/* Push jump + share to the right of the close button */
+#btn-carousel-jump { margin-left: auto; }
+/* Mode label is absolutely centered so the right-side buttons don't
+   shift it off-center as more are added. */
+.carousel-top .carousel-mode {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 /* Smaller, slightly dimmed button for the share icon — kept subtle */
