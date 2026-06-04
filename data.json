@@ -138,8 +138,8 @@
       "file": "12. 그래도 나는 여기야.mp3",
       "duration": 153.02,
       "art": "album art/그래도 나는 여기야.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/12.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "13",
