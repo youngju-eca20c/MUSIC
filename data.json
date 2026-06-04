@@ -68,8 +68,8 @@
       "file": "06. 엠퍼러 인 아델리 (Emperor in Adélie).mp3",
       "duration": 184.99,
       "art": "album art/Emperor in Adelie.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/06.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "06.1",
@@ -78,8 +78,8 @@
       "file": "06.1 엠퍼러 인 아델리 (Alternative Version).mp3",
       "duration": 211.1,
       "art": "album art/Emperor in Adelie Alternative Version.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/06.1.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "07",
