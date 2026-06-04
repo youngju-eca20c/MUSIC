@@ -178,8 +178,8 @@
       "file": "16. 나는 당신의 무엇인가요.mp3",
       "duration": 198.02,
       "art": "album art/나는 당신의 무엇인가요.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/16.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "17",
