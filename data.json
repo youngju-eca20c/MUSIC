@@ -8,8 +8,8 @@
       "file": "01. RED LINE.mp3",
       "duration": 181.27,
       "art": "album art/Red LIne.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/01.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "02",
