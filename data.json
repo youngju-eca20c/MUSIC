@@ -18,8 +18,8 @@
       "file": "02. LET ME BREATHE.mp3",
       "duration": 182.23,
       "art": "album art/let me breathe.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/02.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "03",
