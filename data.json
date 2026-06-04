@@ -128,8 +128,8 @@
       "file": "11. TAKE ME BACK.mp3",
       "duration": 226.63,
       "art": "album art/TAKE ME BACK.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/11.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "12",
