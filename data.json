@@ -28,8 +28,8 @@
       "file": "03. 이번 크리스마스엔 그냥 떡볶이가 먹고싶어.mp3",
       "duration": 156.74,
       "art": "album art/떡볶이 노래.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/03.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "04",
