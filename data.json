@@ -58,8 +58,8 @@
       "file": "05. TONG TONG VIBE.mp3",
       "duration": 135.02,
       "art": "album art/Tong Tong Vibe.png",
-      "lyrics": null,
-      "lyricsSource": null
+      "lyrics": "assets/lyrics/05.manual.txt",
+      "lyricsSource": "manual"
     },
     {
       "num": "06",
