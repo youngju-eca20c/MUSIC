@@ -218,8 +218,8 @@
       "file": "20. 땅 위를 날아.mp3",
       "duration": 229.87,
       "art": "album art/땅위를 날아.png",
-      "lyrics": "assets/lyrics/20.txt",
-      "lyricsSource": "id3"
+      "lyrics": "assets/lyrics/20.manual.txt",
+      "lyricsSource": "manual"
     }
   ]
 }
