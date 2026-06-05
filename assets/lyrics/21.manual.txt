@@ -1,10 +1,8 @@
-[Intro, satellite beeps, morse-code-like clicks, minimal piano pulses, live bass, soft live drums, cold glitch percussion]
 삐 삐 삐
 수신 대기
 삐 삐 삐
 궤도 유지
 
-[Verse 1, ethereal natural female vocal]
 호출 없음
 응답 없음
 초록 불빛
@@ -25,7 +23,6 @@
 너의 위를
 빙글 빙글
 
-[Pre-Chorus, soft clear female vocal, dry intimate mix]
 마지막 명령은
 오래된 숫자
 지워지지 않는
@@ -36,7 +33,6 @@
 받는 사람 없는
 푸른 행성
 
-[Chorus, strange catchy hook, natural female vocal]
 삐 삐 삐
 아직 돌고 있어
 빙글 빙글
@@ -57,7 +53,6 @@
 그래도 나는
 여기 있어
 
-[Verse 2, ethereal natural female vocal, minimal piano and glitch clicks]
 구름 기록
 바다 기록
 도시 불빛
@@ -78,7 +73,6 @@
 어느 별에
 살고 있을까
 
-[Pre-Chorus, sparse piano, soft clear female vocal]
 송신 완료
 확인 없음
 자동 기록
@@ -89,7 +83,6 @@
 불러 주는
 목소리 없음
 
-[Chorus, strange catchy hook, natural female vocal]
 삐 삐 삐
 아직 돌고 있어
 빙글 빙글
@@ -110,7 +103,6 @@
 그래도 나는
 여기 있어
 
-[Bridge, instruments pull back, satellite beeps and piano, soft female vocal]
 잡음 하나
 스쳐 지나
 삐-
@@ -131,7 +123,6 @@
 작게 작게
 흘려보내
 
-[Break, two satellites trading beeps, live drums and bass build softly]
 삐 삐 삐
 치직 치직
 삐 삐 삐
@@ -142,7 +133,6 @@
 삐 삐 삐
 너 거기 있어
 
-[Final Chorus, warmer but still minimal, natural female vocal]
 삐 삐 삐
 아직 돌고 있어
 빙글 빙글
@@ -163,7 +153,6 @@
 혼자만은
 아니었어
 
-[Outro, fading satellite beeps, cold piano pulses, soft natural female vocal]
 수신 대기
 궤도 유지
 희미한 너

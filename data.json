@@ -228,8 +228,8 @@
       "file": "21. 아직 돌고 있어.mp3",
       "duration": 212.52,
       "art": "album art/아직 돌고 있어.png",
-      "lyrics": "assets/lyrics/21.txt",
-      "lyricsSource": "id3"
+      "lyrics": "assets/lyrics/21.manual.txt",
+      "lyricsSource": "manual"
     }
   ]
 }
