@@ -220,6 +220,16 @@
       "art": "album art/땅위를 날아.png",
       "lyrics": "assets/lyrics/20.manual.txt",
       "lyricsSource": "manual"
+    },
+    {
+      "num": "21",
+      "title": "아직 돌고 있어",
+      "artist": "해마는 물고기",
+      "file": "21. 아직 돌고 있어.mp3",
+      "duration": 212.52,
+      "art": "album art/아직 돌고 있어.png",
+      "lyrics": "assets/lyrics/21.txt",
+      "lyricsSource": "id3"
     }
   ]
 }
