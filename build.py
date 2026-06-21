@@ -32,7 +32,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 ROOT = Path(__file__).parent
 ART_DIR = ROOT / "assets" / "art"
 LYR_DIR = ROOT / "assets" / "lyrics"
-ALBUM_ART_DIR = ROOT / "album art"  # user-curated PNG overrides (higher priority)
+ALBUM_ART_DIR = ROOT / "album art"  # user-curated image overrides (higher priority)
 TRACK_RE = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+(.+?)\.mp3$", re.IGNORECASE)
 # Strip leading track-number prefixes from ID3 titles (e.g. "05.1 엠퍼러..." -> "엠퍼러...")
 TITLE_PREFIX_RE = re.compile(r"^\d+(?:\.\d+)?\.?\s+")
@@ -102,11 +102,11 @@ def _longest_shared_substring_len(a: str, b: str, min_len: int = 3) -> int:
 
 def find_album_art_override(title: str, title_from_file: str | None,
                              base_title: str | None = None) -> Path | None:
-    """Match an MP3 to a PNG in album art/.
+    """Match an MP3 to an image in album art/.
 
     Strategy:
       1. Exact normalised match against the track's own title wins immediately.
-      2. Otherwise score each PNG by how much of its name overlaps with the
+      2. Otherwise score each image by how much of its name overlaps with the
          track's own title vs the base title (for X.Y variants). Score is
          weighted so a match against the track's own title beats a match
          against the base title — so '공백의 궤적Accoustic Version.png' wins
@@ -125,24 +125,27 @@ def find_album_art_override(title: str, title_from_file: str | None,
                 own_norms.append(n)
     base_norm = _normalize_title(base_title) if base_title else ""
 
-    pngs = sorted(ALBUM_ART_DIR.glob("*.png"))
+    overrides = sorted(
+        p for p in ALBUM_ART_DIR.iterdir()
+        if p.is_file() and p.suffix.lower().lstrip(".") in ART_EXTS
+    )
 
     # 1. Exact match against the track's own title wins immediately.
-    for png in pngs:
-        norm = _normalize_title(png.stem)
+    for image in overrides:
+        norm = _normalize_title(image.stem)
         if norm and norm in own_norms:
-            return png
+            return image
 
     # 2. Score the rest. Match against the track's own title is worth 100x
-    #    a match against the base title — so an X.Y-specific PNG always beats
-    #    the base track's PNG when both share the base name. Ties are broken
-    #    by preferring the SHORTER PNG name (more entirely explained by the
+    #    a match against the base title — so an X.Y-specific image always beats
+    #    the base track's image when both share the base name. Ties are broken
+    #    by preferring the SHORTER image name (more entirely explained by the
     #    track), so the plain 'Emperor in Adelie.png' wins for 05 over
     #    'Emperor in Adelie Alternative Version.png' (both match emperorinadelie).
-    best_png = None
+    best_image = None
     best_score: tuple[int, int] = (-1, 0)
-    for png in pngs:
-        norm = _normalize_title(png.stem)
+    for image in overrides:
+        norm = _normalize_title(image.stem)
         if not norm:
             continue
         own_match = max(
@@ -157,8 +160,8 @@ def find_album_art_override(title: str, title_from_file: str | None,
         score = (own_match * 100 + base_match, -len(norm))
         if score > best_score:
             best_score = score
-            best_png = png
-    return best_png
+            best_image = image
+    return best_image
 
 
 def extract_lyrics(audio: MP3) -> str | None:
@@ -234,8 +237,8 @@ def main() -> None:
         duration = float(audio.info.length)
 
         # Album art priority:
-        #   1. PNG in album art/ folder whose name matches the track title.
-        #   2. For X.Y variants, the base X track's PNG (so '엠퍼러 인 아델리
+        #   1. Image in album art/ folder whose name matches the track title.
+        #   2. For X.Y variants, the base X track's image (so '엠퍼러 인 아델리
         #      (Alternative)' inherits 'Emperor in Adelie.png' from 05).
         #   3. Otherwise re-extract APIC from the MP3 into assets/art/NN.jpg.
         remove_existing_art(track_num)
