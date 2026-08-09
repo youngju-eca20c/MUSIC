@@ -36,6 +36,7 @@ ALBUM_ART_DIR = ROOT / "album art"  # user-curated image overrides (higher prior
 TRACK_RE = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+(.+?)\.mp3$", re.IGNORECASE)
 # Strip leading track-number prefixes from ID3 titles (e.g. "05.1 엠퍼러..." -> "엠퍼러...")
 TITLE_PREFIX_RE = re.compile(r"^\d+(?:\.\d+)?\.?\s+")
+LYRIC_NOTE_RE = re.compile(r"^\s*\[.*\]\s*$")
 
 
 def slug(track_num: str) -> str:
@@ -164,6 +165,17 @@ def find_album_art_override(title: str, title_from_file: str | None,
     return best_image
 
 
+def clean_lyrics(text: str) -> str | None:
+    """Drop full-line bracket notes like [Intro, ...] from generated lyrics."""
+    lines = [
+        line.rstrip()
+        for line in text.splitlines()
+        if not LYRIC_NOTE_RE.match(line)
+    ]
+    cleaned = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+    return cleaned or None
+
+
 def extract_lyrics(audio: MP3) -> str | None:
     if not audio.tags:
         return None
@@ -171,7 +183,7 @@ def extract_lyrics(audio: MP3) -> str | None:
         if key.startswith("USLT"):
             uslt: USLT = audio.tags[key]
             text = uslt.text or ""
-            return text.strip() if text.strip() else None
+            return clean_lyrics(text)
     return None
 
 

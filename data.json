@@ -230,6 +230,16 @@
       "art": "album art/아직 돌고 있어 hanna.jpg",
       "lyrics": "assets/lyrics/21.manual.txt",
       "lyricsSource": "manual"
+    },
+    {
+      "num": "22",
+      "title": "밤에 갇혔어",
+      "artist": "해마는 물고기",
+      "file": "22. 밤에 갇혔어.mp3",
+      "duration": 229.49,
+      "art": "album art/밤에 갇혔어.jpg",
+      "lyrics": "assets/lyrics/22.txt",
+      "lyricsSource": "id3"
     }
   ]
 }
