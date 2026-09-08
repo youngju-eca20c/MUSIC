@@ -240,6 +240,16 @@
       "art": "album art/밤에 갇혔어.jpg",
       "lyrics": "assets/lyrics/22.txt",
       "lyricsSource": "id3"
+    },
+    {
+      "num": "23",
+      "title": "한 걸음 더",
+      "artist": "해마는 물고기",
+      "file": "23. 한 걸음 더.mp3",
+      "duration": 197.33,
+      "art": "album art/한 걸음 더.png",
+      "lyrics": "assets/lyrics/23.txt",
+      "lyricsSource": "id3"
     }
   ]
 }
