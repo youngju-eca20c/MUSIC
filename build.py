@@ -166,13 +166,17 @@ def find_album_art_override(title: str, title_from_file: str | None,
 
 
 def clean_lyrics(text: str) -> str | None:
-    """Drop full-line bracket notes like [Intro, ...] from generated lyrics."""
-    lines = [
-        line.rstrip()
-        for line in text.splitlines()
-        if not LYRIC_NOTE_RE.match(line)
-    ]
-    cleaned = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+    """Replace full-line section notes with one blank line between sections."""
+    lines: list[str] = []
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        if LYRIC_NOTE_RE.match(line) or not line.strip():
+            if lines and lines[-1] != "":
+                lines.append("")
+            continue
+        lines.append(line)
+
+    cleaned = "\n".join(lines).strip()
     return cleaned or None
 
 
