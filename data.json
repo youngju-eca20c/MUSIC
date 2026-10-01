@@ -260,6 +260,16 @@
       "art": "album art/조금 많이 지났습니다.png",
       "lyrics": "assets/lyrics/24.txt",
       "lyricsSource": "id3"
+    },
+    {
+      "num": "25",
+      "title": "Under the Waterline",
+      "artist": "해마는 물고기",
+      "file": "25. Under the Waterline.mp3",
+      "duration": 349.44,
+      "art": "album art/Under the Waterline.png",
+      "lyrics": "assets/lyrics/25.txt",
+      "lyricsSource": "id3"
     }
   ]
 }
